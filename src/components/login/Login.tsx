@@ -8,13 +8,17 @@ import { SiNaver } from "react-icons/si";
 import { RiKakaoTalkFill } from "react-icons/ri";
 import TermsModal from "@/components/modal/TermsModal";
 import PrivacyModal from "@/components/modal/PrivacyModal";
-import { signIn } from "next-auth/react";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import { authApi } from "@/services/api";
 import { v4 as uuidv4 } from "uuid";
 
-export default function Login() {
+interface LoginProps {
+  onLoginSuccess?: () => void;
+}
+
+export default function Login(props?: LoginProps) {
+  const { onLoginSuccess } = props || {};
   // 테스트 환경에서는 useSearchParams가 undefined일 수 있음
   const searchParamsHook = useSearchParams();
   const searchParams =
@@ -29,6 +33,9 @@ export default function Login() {
 
   const [clientId, setClientId] = useState("");
   useEffect(() => {
+    const token = sessionStorage.getItem("accessToken");
+    if (token) router.push("/");
+
     const id = localStorage.getItem("clientId");
     if (id) {
       setClientId(id);
@@ -199,6 +206,7 @@ export default function Login() {
 
   /** 이메일 로그인 */
   const handleLocalLogin = async () => {
+    console.log("🚀 로그인 시도:", { loginEmail, loginPassword });
     setLoginErrorMessage("");
 
     if (!loginEmail) {
@@ -213,7 +221,42 @@ export default function Login() {
       return;
     }
 
-    signIn("email", { email: loginEmail, password: loginPassword });
+    try {
+      console.log("🌐 API 호출 시작...");
+      const res = await authApi.login(loginEmail, loginPassword);
+      console.log("📨 API 응답:", res);
+      
+      // res가 없거나 code가 없는 경우 처리
+      if (!res || !res.code) {
+        console.log("❌ 응답이 없거나 잘못된 형식:", res);
+        setLoginErrorMessage("서버와의 연결에 문제가 있습니다. 다시 시도해주세요.");
+        return;
+      }
+      
+      if (res.code !== "SU") {
+        console.log("❌ 로그인 실패:", res);
+        setLoginErrorMessage(res.message || AuthErrorMessage.USER_NOT_FOUND);
+        return;
+      }
+      
+      console.log("✅ 로그인 성공!");
+      sessionStorage.setItem("accessToken", res.accessToken);
+      
+      // 모달 기반 로그인이므로 콜백을 통해 모달을 닫음
+      if (onLoginSuccess) {
+        onLoginSuccess();
+        // 페이지 새로고침으로 상태 동기화
+        window.location.reload();
+      } else {
+        // 기존 방식 (페이지 리디렉션)
+        window.location.replace("/");
+      }
+      // const accessToken = jwtDecode(res.accessToken);
+      // const sub = JSON.parse(accessToken.sub as string);
+    } catch (error) {
+      console.error("💥 로그인 에러:", error);
+      setLoginErrorMessage("네트워크 오류가 발생했습니다. 다시 시도해주세요.");
+    }
   };
 
   /** 소셜 로그인 */
@@ -331,7 +374,7 @@ export default function Login() {
     setSignupErrorMessage("");
     if (!validateEmailInput()) return;
     const res = await authApi.emailCheck(signupEmail);
-    if (res.code === "SU") {
+    if (res?.code === "SU") {
       setCheckedEmail(signupEmail);
       certificationNumberRef.current?.focus();
       authApi.certification(signupEmail, clientId);
@@ -361,7 +404,7 @@ export default function Login() {
         {isLoginTab ? (
           <>
             {/* 이메일 로그인 */}
-            <div className="space-y-4">
+            <form onSubmit={(e) => { e.preventDefault(); handleLocalLogin(); }} className="space-y-4">
               <div>
                 <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">
                   이메일
@@ -373,7 +416,6 @@ export default function Login() {
                   placeholder="이메일 주소를 입력하세요"
                   value={loginEmail}
                   onChange={(e) => setLoginEmail(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleLocalLogin()}
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all"
                 />
               </div>
@@ -389,7 +431,6 @@ export default function Login() {
                     placeholder="비밀번호를 입력하세요"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && handleLocalLogin()}
                     className="w-full pl-4 pr-10 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500 focus:border-transparent transition-all"
                   />
                   <button
@@ -404,20 +445,20 @@ export default function Login() {
               </div>
 
               <div className="flex justify-end mt-1">
-                <button className="text-sm text-gray-600 hover:text-rose-500 border-none bg-transparent">
+                <button type="button" className="text-sm text-gray-600 hover:text-rose-500 border-none bg-transparent">
                   비밀번호를 잊으셨나요?
                 </button>
               </div>
 
               <button
-                onClick={handleLocalLogin}
+                type="submit"
                 className="w-full bg-rose-500 hover:bg-rose-600 text-white font-medium py-3 rounded-lg shadow-sm transition-colors duration-200 border-0"
               >
                 로그인
               </button>
 
               <p className="text-xs text-rose-500">{loginErrorMessage}</p>
-            </div>
+            </form>
 
             {/* 구분선 */}
             <div className="flex items-center my-6">

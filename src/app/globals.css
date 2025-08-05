@@ -1,8 +1,12 @@
 /* 부트스트랩 스타일 임포트 */
-@import 'bootstrap/dist/css/bootstrap.min.css';
+@import "bootstrap/dist/css/bootstrap.min.css";
 /* 구글 폰트 임포트 */
-@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap');
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@300;400;500;600;700&display=swap");
+
+/* 배너 슬라이드 */
+@import "slick-carousel/slick/slick.css";
+@import "slick-carousel/slick/slick-theme.css";
 
 @tailwind base;
 @tailwind components;
@@ -12,23 +16,24 @@
 :root {
   --foreground-rgb: 51, 51, 51;
   --background-rgb: 255, 255, 255;
-  --font-main: 'Noto Sans KR', 'Montserrat', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
-  
+  --font-main: "Noto Sans KR", "Montserrat", -apple-system, BlinkMacSystemFont,
+    system-ui, Roboto, sans-serif;
+
   /* 에어비앤비 스타일 색상 변수 */
-  --color-primary: #FF385C;
-  --color-primary-dark: #E31C5F;
-  --color-secondary: #00A699;
+  --color-primary: #ff385c;
+  --color-primary-dark: #e31c5f;
+  --color-secondary: #00a699;
   --color-tertiary: #484848;
-  --color-gray-light: #F7F7F7;
-  --color-gray-medium: #DDDDDD;
+  --color-gray-light: #f7f7f7;
+  --color-gray-medium: #dddddd;
   --color-gray-dark: #717171;
-  
+
   /* 테마 전환용 변수 */
   --text-primary: #111827;
-  --text-secondary: #4B5563;
+  --text-secondary: #4b5563;
   --bg-primary: #ffffff;
-  --bg-secondary: #F3F4F6;
-  --border-color: #E5E7EB;
+  --bg-secondary: #f3f4f6;
+  --border-color: #e5e7eb;
 }
 
 /* 다크 모드 변수 */
@@ -38,10 +43,10 @@
   --color-gray-light: #1f1f1f;
   --color-gray-medium: #333333;
   --color-gray-dark: #cccccc;
-  
+
   /* 테마 전환용 변수 */
   --text-primary: #ffffff;
-  --text-secondary: #D1D5DB;
+  --text-secondary: #d1d5db;
   --bg-primary: #000000;
   --bg-secondary: #111827;
   --border-color: #374151;
@@ -57,21 +62,21 @@
 .light {
   --foreground-rgb: 51, 51, 51;
   --background-rgb: 255, 255, 255;
-  --color-gray-light: #F7F7F7;
-  --color-gray-medium: #DDDDDD;
+  --color-gray-light: #f7f7f7;
+  --color-gray-medium: #dddddd;
   --color-gray-dark: #717171;
-  
+
   /* 테마 전환용 변수 */
   --text-primary: #111827;
-  --text-secondary: #4B5563;
+  --text-secondary: #4b5563;
   --bg-primary: #ffffff;
-  --bg-secondary: #F3F4F6;
-  --border-color: #E5E7EB;
+  --bg-secondary: #f3f4f6;
+  --border-color: #e5e7eb;
 
   /* 섹션 배경색 */
   --section-bg: #ffffff;
   --card-bg: #ffffff;
-  --card-border: #E5E7EB;
+  --card-border: #e5e7eb;
   --input-bg: #ffffff;
 }
 
@@ -79,24 +84,24 @@
 .original {
   --foreground-rgb: 51, 51, 51;
   --background-rgb: 255, 255, 255;
-  --color-gray-light: #F7F7F7;
-  --color-gray-medium: #DDDDDD;
+  --color-gray-light: #f7f7f7;
+  --color-gray-medium: #dddddd;
   --color-gray-dark: #717171;
-  
+
   /* 테마 전환용 변수 */
   --text-primary: #111827;
-  --text-secondary: #4B5563;
+  --text-secondary: #4b5563;
   --bg-primary: #ffffff;
-  --bg-secondary: #F3F4F6;
-  --border-color: #E5E7EB;
-  
+  --bg-secondary: #f3f4f6;
+  --border-color: #e5e7eb;
+
   /* 오리지널 모드 전용 핑크색 강조 */
   --accent-color: #ec4899;
 
   /* 섹션 배경색 */
   --section-bg: #ffffff;
   --card-bg: #ffffff;
-  --card-border: #E5E7EB;
+  --card-border: #e5e7eb;
   --input-bg: #ffffff;
 }
 
@@ -114,23 +119,23 @@ body {
   .btn-primary {
     @apply bg-pink-500 text-white font-medium py-2 px-4 rounded-lg hover:bg-pink-600 transition-all;
   }
-  
+
   .btn-secondary {
     @apply bg-white text-gray-800 font-medium py-2 px-4 rounded-lg border border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all;
   }
-  
+
   .card {
     @apply bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden;
   }
-  
+
   .card-header {
     @apply p-4 font-semibold;
   }
-  
+
   .card-body {
     @apply p-4;
   }
-  
+
   .form-control {
     @apply w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-rose-500;
   }

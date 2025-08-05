@@ -1,12 +1,20 @@
 import axios from 'axios';
-// import { Resume, CreateResumeRequest, UpdateResumeRequest } from '@/types';
-import { getSession } from 'next-auth/react';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+if (!API_URL) {
+  console.error('NEXT_PUBLIC_API_URL 환경변수가 설정되지 않았습니다.');
+}
+
 const FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: API_URL,
+  timeout: 10000,
+  withCredentials: true,
+  headers: {
+    'Content-Type': 'application/json',
+  },
 });
 
 // FastAPI 클라이언트
@@ -21,13 +29,8 @@ console.log('FastAPI URL:', FASTAPI_URL);
 
 // Request interceptor for adding auth token
 api.interceptors.request.use(async (config) => {
-  // NextAuth 세션에서 토큰 가져오기
-  const session = await getSession();
-  const token = session?.user?.accessToken as string;
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  const accessToken = sessionStorage.getItem('accessToken')
+  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
   return config;
 });
 
@@ -99,15 +102,48 @@ export const recommendationApi = {
 
 export const authApi = {
   /** 일반 로그인 */
-  login: async (credentials: Record<string, string> | undefined) => {
+  login: async (email: string, password: string) => {
     try {
-      const res = await axios.post(`${API_URL}/auth/login`, {
-        email: credentials?.email,
-        password: credentials?.password,
-      })
+      console.log("🌐 로그인 API 호출 (직접 서버):", { email, password });
+      
+      // 직접 서버로 호출
+      const res = await api.post('/auth/login', {
+        email,
+        password,
+      });
+      
+      console.log("📨 서버 응답:", res.data);
+      return res.data;
+    } catch (error: any) {
+      console.error("❌ 로그인 API 호출 중 에러:", error);
+      console.error("❌ 에러 상태:", error.response?.status);
+      console.error("❌ 에러 응답:", error.response?.data);
+      console.error("❌ 네트워크 에러:", error.message);
+      
+      // 서버에서 응답이 온 경우 (401, 400 등)
+      if (error.response && error.response.data) {
+        return {
+          code: error.response.data.code || "F",
+          message: error.response.data.message || "로그인에 실패했습니다.",
+          accessToken: null
+        };
+      }
+      
+      // 네트워크 에러인 경우
+      return {
+        code: "NETWORK_ERROR",
+        message: "서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요.",
+        accessToken: null
+      };
+    }
+  },
+
+  logout: async () => {
+    try {
+      const res = await axios.post(`/api/auth/logout`)
       return res.data
     } catch (error) {
-      console.log("일반 로그인 API 호출 중 에러: ", error)
+      console.log("로그아웃 API 호출 중 에러: ", error)
     }
   },
 
@@ -169,10 +205,9 @@ export const authApi = {
 
 export const infoApi = {
   /** 회원 정보 가져오기 */
-  getInfo: (email: string) => {
-    return api.post('/member', {
-      email
-    })
+  getInfo: async () => {
+    const res = await api.get('/member');
+    return res.data
   },
 
   /** 회원 정보 수정하기 */
@@ -183,28 +218,46 @@ export const infoApi = {
 
 export const paymentApi = {
   /** 결제 임시 저장 */
-  payTempStore: (orderId: string, amount: string) => {
-    return api.post('/api/temp', {
-      orderId,
-      amount
-    })
+  payTempStore: async (orderId: string, amount: string) => {
+    try {
+      const res = await api.post('/api/temp', {
+        orderId,
+        amount
+      })
+      return res.data
+    } catch (error) {
+      console.error("결제 임시 저장 API 호출 중 에러: ", error);
+    }
   },
 
   /** 결제 임시 저장 확인 */
-  payTempCheck: (orderId: string, amount: string) => {
-    return api.post('/api/temp', {
-      // todo api 수정 필요 
-      orderId,
-      amount
-    })
+  payTempCheck: async (orderId: string, amount: string) => {
+    try {
+      const res = await api.post('/api/temp/check', {
+        orderId,
+        amount
+      })
+      return res.data
+    } catch (error) {
+      console.error("결제 임시 저장 확인 API 호출 중 에러: ", error);
+    }
   },
 
   /** 결제 확인 */
-  payConfirm: (paymentKey: string, orderId: string, amount: string) => {
-    return api.post('/api/confirm', {
-      paymentKey,
-      orderId,
-      amount
-    })
+  payConfirm: async (paymentKey: string, orderId: string, amount: string, uuid: string) => {
+    try {
+      const res = await api.post('/api/confirm', {
+        paymentKey,
+        orderId,
+        amount
+      }, {
+        headers: {
+          "Idempotency-Key": uuid,
+        }
+      })
+      return res.data
+    } catch (error) {
+      console.error("결제 확인 API 호출 중 에러: ", error);
+    }
   },
 }

@@ -9,41 +9,91 @@ export default function CreateReviewButton() {
 
   const handleSubmit = async (reviewData: any, proofImage?: File | null, reviewImages?: File[]) => {
     try {
-      const images: string[] = [];
+      console.log("🚀 리뷰 등록 시작:", reviewData);
+      console.log("📷 증명 이미지:", proofImage ? `${proofImage.name} (${proofImage.size} bytes)` : "없음");
+      console.log("🖼️ 리뷰 이미지들:", reviewImages?.map(img => `${img.name} (${img.size} bytes)`) || []);
 
+      // FormData 생성 (이미지 파일 포함)
+      const formData = new FormData();
+      
+      // 리뷰 데이터를 JSON으로 추가 - Blob으로 감싸서 Content-Type 명시
+      const reviewJson = {
+        title: reviewData.title,
+        content: reviewData.content,
+        rating: reviewData.rating,
+        address: reviewData.location || ""
+      };
+      
+      // 리뷰 이미지만 추가 (영수증 이미지는 완전히 제외)
       if (reviewImages && reviewImages.length > 0) {
-        for (const file of reviewImages) {
-          const base64 = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onloadend = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(file);
-          });
-          images.push(base64);
-        }
+        reviewImages.forEach((image, index) => {
+          formData.append('images', image);
+          console.log(`  - 리뷰 이미지 ${index + 1} 추가:`, image.name);
+        });
       }
 
-      const newReview = {
-        ...reviewData,
-        id: Date.now().toString(),
-        images,
-        author: {
-          name: "사용자",
-          avatar: "/images/default-profile.png"
+      // JSON을 Blob으로 감싸서 Content-Type을 application/json으로 설정
+      const reviewBlob = new Blob([JSON.stringify(reviewJson)], { 
+        type: 'application/json' 
+      });
+      formData.append('review', reviewBlob);
+
+      // FormData 내용 디버깅
+      console.log("📋 FormData 내용:");
+      let imageCount = 0;
+      for (let [key, value] of formData.entries()) {
+        if (key === 'images') {
+          imageCount++;
+          console.log(`  - ${key}[${imageCount}]:`, value);
+        } else {
+          console.log(`  - ${key}:`, value);
+        }
+      }
+      console.log("  - 총 이미지 개수:", imageCount);
+      console.log("  - 리뷰 이미지 개수:", reviewImages?.length || 0);
+      console.log("  - 증명 이미지:", proofImage ? "있음" : "없음");
+      console.log("  - 리뷰 JSON:", reviewJson);
+
+      // 인증 토큰 가져오기
+      const token = sessionStorage.getItem('accessToken');
+      if (!token) {
+        alert("로그인이 필요합니다.");
+        return;
+      }
+
+      console.log("📤 서버로 전송 중...");
+
+      // API 호출
+      const response = await fetch('/api/reviews/create', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
         },
-        tags: []
-      };
+        body: formData
+      });
 
-      const stored = localStorage.getItem("localReviews");
-      const parsed = stored ? JSON.parse(stored) : [];
-      parsed.unshift(newReview);
-      localStorage.setItem("localReviews", JSON.stringify(parsed));
-
-      alert("리뷰가 성공적으로 등록되었습니다!");
-      window.location.reload();
+      if (response.ok) {
+        console.log("✅ 리뷰 등록 성공!");
+        console.log("응답 상태:", response.status);
+        console.log("응답 헤더:", response.headers);
+        
+        // 응답 본문이 있다면 확인
+        const responseText = await response.text();
+        console.log("응답 본문:", responseText);
+        
+        alert("리뷰가 성공적으로 등록되었습니다!");
+        // 약간의 지연을 주어 서버의 트랜잭션이 완료되도록 함
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      } else {
+        const errorData = await response.json();
+        console.error("❌ 서버 응답 오류:", errorData);
+        alert(`리뷰 등록에 실패했습니다: ${errorData.error || '알 수 없는 오류'}`);
+      }
     } catch (error) {
-      console.error("리뷰 등록 실패:", error);
-      alert("리뷰 등록에 실패했습니다.");
+      console.error("💥 리뷰 등록 실패:", error);
+      alert("리뷰 등록에 실패했습니다. 다시 시도해주세요.");
     }
   };
 
@@ -51,18 +101,15 @@ export default function CreateReviewButton() {
     <>
       <button
         onClick={() => setIsModalOpen(true)}
-        className="inline-flex items-center border-none px-4 py-2 bg-pink-500 text-white rounded-lg shadow-sm hover:bg-pink-600 transition-colors"
+        className="group inline-flex items-center px-6 py-3 bg-gradient-to-r from-pink-500 to-rose-500 text-white rounded-xl shadow-lg hover:shadow-xl hover:from-pink-600 hover:to-rose-600 transition-all duration-300 transform hover:-translate-y-0.5 font-semibold focus:outline-none focus:ring-0 border-none"
       >
-        <FaPlus className="mr-2" size={14} />
+        <div className="flex items-center justify-center w-5 h-5 bg-white/20 rounded-full mr-3 group-hover:bg-white/30 transition-colors">
+          <FaPlus className="text-sm" />
+        </div>
         <span>리뷰 작성하기</span>
       </button>
 
-      <CreateReviewModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSubmit={handleSubmit}
-        requireProofImage={true}
-      />
+      <CreateReviewModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleSubmit} />
     </>
   );
 }

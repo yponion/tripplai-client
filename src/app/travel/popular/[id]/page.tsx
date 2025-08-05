@@ -130,10 +130,11 @@ export default function TravelCourseDetail() {
         setIsLoading(true);
         
         // API 호출 상태 확인을 위한 로깅 추가
-        console.log(`코스 데이터 요청 시작: /api/course/${courseId}`);
+        console.log(`코스 데이터 요청 시작: http://localhost:8080/api/course/${courseId}`);
         
-        // Next.js 리라이트를 통해 API 호출 (CORS 문제 해결)
-        const response = await fetch(`/api/course/${courseId}`, {
+        // 백엔드 서버로 직접 API 호출
+        const response = await fetch(`http://localhost:8080/api/course/${courseId}`, {
+          mode: "cors",
           headers: {
             'Accept': 'application/json'
           },

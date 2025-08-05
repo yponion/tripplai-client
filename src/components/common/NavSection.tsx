@@ -4,11 +4,13 @@ import { FaUserCircle, FaMapMarkedAlt, FaSearch, FaSun, FaMoon, FaPalette } from
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { signOut, useSession } from "next-auth/react";
 import Button from "@/components/common/Button";
 import useThemeMode from "@/hooks/useDarkMode";
 import dynamic from "next/dynamic";
 import clsx from "clsx"; //디자인 추가
+import { jwtDecode } from "jwt-decode";
+import { authApi } from "@/services/api";
+import Login from "@/components/login/Login";
 
 const logo = process.env.NEXT_PUBLIC_SERVICE_NAME;
 
@@ -19,7 +21,7 @@ const NavSection = () => {
   const [openModal, setOpenModal] = useState(false);
   const [isFestivalMenuOpen, setIsFestivalMenuOpen] = useState(false);
   const [isPlanMenuOpen, setIsPlanMenuOpen] = useState(false);
-  const { data: session } = useSession();
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
   const { themeMode, cycleTheme, isLoading } = useThemeMode();
 
   // 스크롤 이벤트 리스너
@@ -128,9 +130,7 @@ const NavSection = () => {
   };
 
   const handleLoginClick = () => {
-    if (session?.user) {
-      setOpenModal(!openModal);
-    } else router.push("/login", { scroll: false });
+    setOpenModal(!openModal);
   };
 
   const handleInfoClick = () => {
@@ -138,7 +138,9 @@ const NavSection = () => {
   };
 
   const handleLogoutClick = () => {
-    signOut();
+    sessionStorage.removeItem("accessToken");
+    authApi.logout();
+    window.location.reload();
   };
 
   // 현재 테마에 따라 헤더 스타일 변경
@@ -256,6 +258,10 @@ const NavSection = () => {
         </div>
 
         <div className="flex items-center gap-1 md:gap-3">
+          <Link href="/pricing" className={getLinkClasses()}>
+            결제
+          </Link>
+
           <Link href="/week" className={getLinkClasses()}>
             주간 여행지
           </Link>
@@ -266,14 +272,9 @@ const NavSection = () => {
             onMouseEnter={() => setIsFestivalMenuOpen(true)}
             onMouseLeave={() => setIsFestivalMenuOpen(false)}
           >
-            <span
-              className={clsx(
-                "text-sm font-medium px-3 py-2 hover:bg-gray-50 transition-colors",
-                themeMode === "dark" ? "text-white hover:bg-gray-800" : "text-gray-600 hover:text-gray-900"
-              )}
-            >
+            <Link href="/festival/list" className={getLinkClasses()}>
               축제
-            </span>
+            </Link>
 
             {isFestivalMenuOpen && (
               <div className="absolute top-full left-0 mt-1 w-40 bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg shadow-md z-50">
@@ -315,7 +316,7 @@ const NavSection = () => {
             onMouseEnter={() => setIsPlanMenuOpen(true)}
             onMouseLeave={() => setIsPlanMenuOpen(false)}
           >
-            <Link href="/dashboard" className="block">
+            <Link href="/travel/create" className="block">
               <Button variant="outline" size="sm" className={`font-medium font-semibold ${getDashboardTextClass()}`}>
                 <span>AI 여행 계획</span>
               </Button>
@@ -327,10 +328,10 @@ const NavSection = () => {
                   href="/dashboard"
                   className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-white"
                 >
-                  AI 여행 계획
+                  AI 여행 계획 보관함
                 </Link>
                 <Link
-                  href="/dashboard/favorite-courses"
+                  href="/travel/favorite-courses"
                   className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-white"
                 >
                   내가 찜한 인기여행코스
@@ -338,30 +339,33 @@ const NavSection = () => {
               </div>
             )}
           </div>
-
-          <Link href="/dashboard" className="md:hidden">
-            <Button variant="primary" size="sm" className="text-xs border-0">
-              AI 여행
+          {!sessionStorage.getItem("accessToken") ? (
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-1 flex items-center gap-2"
+              onClick={() => setIsLoginModalOpen(true)}
+              aria-label="로그인"
+            >
+              <FaUserCircle className={getUserIconClasses()} />
+              <span className={`hidden md:block text-sm font-semibold ${getDashboardTextClass()}`}>
+                로그인
+              </span>
             </Button>
-          </Link>
-          <Button
-            variant="outline"
-            size="sm"
-            className="ml-1 flex items-center gap-2"
-            onClick={handleLoginClick}
-            aria-label={session?.user?.name ?? "로그인"}
-          >
-            <FaUserCircle className={getUserIconClasses()} />
-            <span className={`hidden md:block text-sm font-semibold ${getDashboardTextClass()}`}>
-              {session?.user
-                ? session.user.name
-                  ? session.user.name
-                  : session.user.email?.includes("google_")
-                  ? "사용자"
-                  : session.user.email
-                : "로그인"}
-            </span>
-          </Button>
+          ) : (
+            <Button
+              variant="outline"
+              size="sm"
+              className="ml-1 flex items-center gap-2"
+              onClick={handleLoginClick}
+              aria-label={JSON.parse(jwtDecode(sessionStorage.getItem("accessToken")!).sub!).nickname}
+            >
+              <FaUserCircle className={getUserIconClasses()} />
+              <span className={`hidden md:block text-sm font-semibold ${getDashboardTextClass()}`}>
+                {JSON.parse(jwtDecode(sessionStorage.getItem("accessToken")!).sub!).nickname}
+              </span>
+            </Button>
+          )}
 
           <button
             className="ml-1 p-2 bg-transparent rounded-full hover:bg-transparent focus:outline-none"
@@ -390,6 +394,23 @@ const NavSection = () => {
           </div>
         ) : null}
       </div>
+
+      {/* 로그인 모달 */}
+      {isLoginModalOpen && (
+        <>
+          {/* 어두운 배경 */}
+          <div 
+            className="fixed top-0 w-dvw h-dvh bg-black opacity-50 z-[9999]"
+            onClick={() => setIsLoginModalOpen(false)}
+          />
+          {/* 중앙 정렬 모달 컨테이너 */}
+          <div className="fixed top-0 w-dvw h-dvh flex items-center justify-center z-[9999]">
+            <div onClick={(e) => e.stopPropagation()}>
+              <Login onLoginSuccess={() => setIsLoginModalOpen(false)} />
+            </div>
+          </div>
+        </>
+      )}
     </header>
   );
 };

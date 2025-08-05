@@ -39,12 +39,8 @@ export default function Calendar() {
     weeks.push(allDays.slice(i, i + 7));
   }
 
-  const items = data?.response.body.items.item.filter(
-    (festival) => festival.eventenddate > getDate()
-  );
-  const sortedItems = items?.sort(
-    (a, b) => Number(a.eventstartdate) - Number(b.eventstartdate)
-  );
+  const items = data?.response.body.items.item.filter((festival) => festival.eventenddate > getDate());
+  const sortedItems = items?.sort((a, b) => Number(a.eventstartdate) - Number(b.eventstartdate));
 
   const handleDateClick = (day: number) => {
     const dateStr = `${year}${String(month).padStart(2, "0")}${String(day).padStart(2, "0")}`;
@@ -87,8 +83,7 @@ export default function Calendar() {
 
     const matchesSearch = title.includes(keyword) || addr.includes(keyword);
     const matchesDate =
-      !selectedDate ||
-      (festival.eventstartdate <= selectedDate && selectedDate <= festival.eventenddate);
+      !selectedDate || (festival.eventstartdate <= selectedDate && selectedDate <= festival.eventenddate);
 
     return matchesSearch && matchesDate;
   });
@@ -138,10 +133,8 @@ export default function Calendar() {
                 : "";
 
               const count = isValidDay
-                ? sortedItems?.filter(
-                    (item) =>
-                      item.eventstartdate <= dateStr && dateStr <= item.eventenddate
-                  ).length || 0
+                ? sortedItems?.filter((item) => item.eventstartdate <= dateStr && dateStr <= item.eventenddate)
+                    .length || 0
                 : 0;
 
               const isSelected = selectedDate === dateStr;
@@ -181,7 +174,10 @@ export default function Calendar() {
             {submittedQuery
               ? `"${submittedQuery}" 검색 결과`
               : selectedDate
-              ? `${selectedDate.slice(0, 4)}년 ${selectedDate.slice(4, 6)}월 ${selectedDate.slice(6, 8)}일의 축제 리스트`
+              ? `${selectedDate.slice(0, 4)}년 ${selectedDate.slice(4, 6)}월 ${selectedDate.slice(
+                  6,
+                  8
+                )}일의 축제 리스트`
               : "전체 축제 리스트"}
           </h3>
 
@@ -195,7 +191,7 @@ export default function Calendar() {
               className="w-full px-4 py-2 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
             />
             {suggestions.length > 0 && (
-              <ul className="list-none absolute z-[9999] w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
+              <ul className="absolute z-[9999] w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto shadow-lg">
                 {suggestions.map((suggestion, index) => (
                   <li
                     key={index}
@@ -223,9 +219,7 @@ export default function Calendar() {
               <div
                 key={item.contentid}
                 className="relative bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition cursor-pointer"
-                onClick={() =>
-                  router.push(`/festival/detail/${item.contentid}`, { scroll: false })
-                }
+                onClick={() => router.push(`/festival/detail/${item.contentid}`, { scroll: false })}
               >
                 <div className="absolute top-2 left-2 bg-purple-500 text-white text-xs font-semibold px-2 py-1 rounded z-10">
                   개최중
@@ -240,16 +234,12 @@ export default function Calendar() {
                   <p className="text-sm text-gray-600 mt-1">
                     {item.eventstartdate} ~ {item.eventenddate}
                   </p>
-                  <p className="text-sm text-gray-500">
-                    {item.addr1 || "장소 정보 없음"}
-                  </p>
+                  <p className="text-sm text-gray-500">{item.addr1 || "장소 정보 없음"}</p>
                 </div>
               </div>
             ))}
             {filteredFestivals?.length === 0 && (
-              <p className="text-gray-500 text-center col-span-3">
-                해당 조건의 축제가 없습니다.
-              </p>
+              <p className="text-gray-500 text-center col-span-3">해당 조건의 축제가 없습니다.</p>
             )}
           </motion.div>
         </AnimatePresence>

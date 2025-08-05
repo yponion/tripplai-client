@@ -1,23 +1,33 @@
+export interface ReviewImage {
+  reviewImageId: number;
+  imageUrl: string;
+}
+
 export interface Review {
-  id: string;
+  receiptReviewId: number;
   title: string;
   content: string;
-  location: string;
-  images: string[];
   rating: number;
-  author: {
-    id: string;
-    name: string;
-    avatar?: string;
-  };
-  tags: string[];
   createdAt: string;
-  updatedAt: string;
+  nickname: string;
+  images: ReviewImage[];
 }
 
 export interface ReviewListResponse {
-  reviews: Review[];
-  totalCount: number;
-  page: number;
-  pageSize: number;
+  content: Review[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  numberOfElements: number;
+  first: boolean;
+  last: boolean;
+  empty: boolean;
+}
+
+export interface CreateReviewRequest {
+  address: string;
+  title: string;
+  content: string;
+  rating: number;
 } 

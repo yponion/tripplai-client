@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const path = require("path");
-
+ 
 const nextConfig = {
   transpilePackages: ["@chakra-ui/react", "@chakra-ui/next-js"],
   images: {
@@ -12,8 +12,9 @@ const nextConfig = {
       { protocol: "https", hostname: "korean.visitkorea.or.kr" },
       { protocol: "https", hostname: "www.visitkorea.or.kr" },
       { protocol: "https", hostname: "cdn.pixabay.com" },
+      { protocol: "https", hostname: "images.unsplash.com" },
     ],
-    domains: ["cdn.pixabay.com", "apis.data.go.kr", "tong.visitkorea.or.kr", "43.200.177.95"],
+    domains: ["cdn.pixabay.com", "apis.data.go.kr", "tong.visitkorea.or.kr", "43.200.177.95", "images.unsplash.com"],
     unoptimized: true,
   },
   webpack: (config) => {
@@ -29,14 +30,7 @@ const nextConfig = {
     };
     return config;
   },
-  async rewrites() {
-    return [
-      {
-        source: "/:path*",
-        destination: "http://3.34.181.101/:path*",
-      },
-    ];
-  },
 };
-
+ 
 module.exports = nextConfig;
+ 

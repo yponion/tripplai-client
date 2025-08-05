@@ -28,6 +28,7 @@ const schema = z.object({
   password: z.string().min(6, { message: "비밀번호는 최소 6자 이상" }),
   nickname: z.string().min(2, { message: "닉네임은 최소 2자 이상" }),
   phoneNumber: z.string().regex(/^010\d{8}$/, { message: "잘못된 전화번호 형식" }),
+  ticket: z.string(),
 });
 
 type FormData = z.infer<typeof schema>;
@@ -36,28 +37,27 @@ export default function Info() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
 
-  useEffect(() => {
-    const res = infoApi.getInfo("test");
-    console.log("확인", res);
-
-    // 초기 이미지 설정
-    if (mockData.imageUrl) {
-      setPreview(mockData.imageUrl);
-    }
-  }, []);
-
   const {
     register,
     handleSubmit,
+    reset,
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      email: mockData.email,
-      nickname: mockData.nickname,
-      phoneNumber: mockData.phoneNumber,
-    },
   });
+
+  useEffect(() => {
+    async function fetchUser() {
+      const res = await infoApi.getInfo();
+      reset({
+        nickname: res.nickname,
+        email: res.email,
+        phoneNumber: res.phoneNumber,
+        ticket: res.ticket,
+      });
+    }
+    fetchUser();
+  }, [reset]);
 
   const onSubmit = (data: FormData) => {
     console.log("입력 데이터:", data);
@@ -164,6 +164,21 @@ export default function Info() {
               placeholder="비밀번호를 입력하세요"
             />
             {errors.password && <p className="text-sm text-red-500 mt-1">{errors.password.message}</p>}
+          </div>
+
+          {/* 디켓 */}
+          <div>
+            <label htmlFor="ticket" className="block mb-1 text-sm font-medium text-gray-700">
+              티켓
+            </label>
+            <input
+              id="ticket"
+              type="text"
+              readOnly
+              {...register("ticket")}
+              className="w-full px-4 py-3 border border-gray-300 rounded-xl bg-slate-100 dark:bg-slate-500 focus:outline-none cursor-not-allowed"
+            />
+            {errors.ticket && <p className="text-sm text-red-500 mt-1">{errors.ticket.message}</p>}
           </div>
 
           {/* 제출 버튼 */}

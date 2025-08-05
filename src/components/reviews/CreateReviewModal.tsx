@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { FaTimes, FaStar, FaUpload, FaCheck, FaSpinner, FaImage, FaTrash } from 'react-icons/fa';
 import useThemeMode from '@/hooks/useDarkMode';
 
@@ -133,60 +134,295 @@ export default function CreateReviewModal({ isOpen, onClose, onSubmit, requirePr
 
   if (!isOpen) return null;
 
-  // 여행 관련 정보 추출 함수
+  // 여행 관련 정보 추출 함수 (개선된 지역 인식)
   const extractTravelInfo = (text: string): ExtractedTravelInfo => {
     const info: ExtractedTravelInfo = {};
     
-    // 출발지-도착지 패턴 (항공권)
-    // "서울 -- 제주" 또는 "서울→제주" 형식 통합
-    const flightRoutePattern = /(서울|부산|제주|대구|인천|광주|대전|울산|세종)\s*(?:--|→|⇒)\s*(서울|부산|제주|대구|인천|광주|대전|울산|세종)/;
-    const flightRouteMatch = text.match(flightRoutePattern);
-
-    if (flightRouteMatch) {
-      try {
-        // 전체 매치된 문자열에서 도시 이름만 추출
-        const cities = flightRouteMatch[0].split(/\s*(?:--|→|⇒)\s*/);
-        if (cities.length >= 2) {
-          const arrival = cities[1];
-          info.location = arrival;
-          info.parentLocation = LOCATION_MAPPING[arrival as keyof typeof LOCATION_MAPPING];
+    // 텍스트 정규화 (공백 정리, 특수문자 통일)
+    const normalizedText = text.replace(/\s+/g, ' ').trim();
+    
+    // 1. 한국 도시/지역 전체 매핑 (더 상세한 지역 인식)
+    const locationMappings: { [key: string]: string } = {
+      // 서울 및 수도권
+      '강남': '서울', '강남구': '서울', '서초': '서울', '서초구': '서울',
+      '종로': '서울', '종로구': '서울', '용산': '서울',
+      '용산구': '서울', '마포': '서울', '마포구': '서울', '영등포': '서울',
+      '영등포구': '서울', '송파': '서울', '송파구': '서울', '강동': '서울',
+      '관악': '서울', '동작': '서울', '성북': '서울',
+      '노원': '서울', '도봉': '서울', '강북': '서울', '은평': '서울',
+      '서대문': '서울', '양천': '서울', '구로': '서울', '금천': '서울',
+      '동대문': '서울', '중랑': '서울', '성동': '서울', '광진': '서울',
+      '서울역': '서울', '명동': '서울', '홍대': '서울', '신촌': '서울',
+      '이태원': '서울', '삼성': '서울', '잠실': '서울', '여의도': '서울',
+      
+      // 인천
+      '인천공항': '인천', '인천국제공항': '인천', '연수': '인천', '연수구': '인천',
+      '남동': '인천', '남동구': '인천', '부평': '인천', '부평구': '인천',
+      '계양': '인천', '계양구': '인천', '서구': '인천', '미추홀': '인천',
+      '동구': '인천', '중구': '인천', '강화': '인천', '옹진': '인천',
+      
+      // 경기도
+      '수원': '경기도', '수원시': '경기도', '용인': '경기도', '용인시': '경기도',
+      '성남': '경기도', '성남시': '경기도', '안양': '경기도', '안양시': '경기도',
+      '부천': '경기도', '부천시': '경기도', '안산': '경기도', '안산시': '경기도',
+      '고양': '경기도', '고양시': '경기도', '일산': '경기도', '파주': '경기도',
+      '의정부': '경기도', '김포': '경기도', '광명': '경기도', '시흥': '경기도',
+      '군포': '경기도', '하남': '경기도', '오산': '경기도', '이천': '경기도',
+      '안성': '경기도', '화성': '경기도', '평택': '경기도', '과천': '경기도',
+      '구리': '경기도', '남양주': '경기도', '포천': '경기도', '양주': '경기도',
+      '여주': '경기도', '동두천': '경기도', '가평': '경기도', '양평': '경기도',
+      '분당': '경기도', '판교': '경기도', '동탄': '경기도', '광교': '경기도',
+      
+      // 부산
+      '해운대': '부산', '해운대구': '부산',
+      '영도': '부산', '영도구': '부산', '부산진': '부산',
+      '부산진구': '부산', '동래': '부산', '동래구': '부산',
+      '사하': '부산', '사하구': '부산', '금정': '부산',
+      '금정구': '부산', '연제': '부산',
+      '연제구': '부산', '수영': '부산', '수영구': '부산', '사상': '부산',
+      '사상구': '부산', '광안리': '부산', '남포동': '부산', '서면': '부산',
+      '부산역': '부산', '센텀': '부산', '센텀시티': '부산',
+      
+      // 대구
+      '수성': '대구', '수성구': '대구', '달서': '대구',
+      '달서구': '대구', '달성': '대구', '달성군': '대구', '동성로': '대구',
+      
+      // 대전
+      '유성': '대전', '유성구': '대전', '대덕': '대전', '대덕구': '대전', '둔산': '대전',
+      
+      // 울산
+      '울주': '울산', '울주군': '울산',
+      
+      // 광주
+      '광산': '광주', '광산구': '광주',
+      
+      // 강원도
+      '춘천': '강원도', '춘천시': '강원도', '원주': '강원도', '원주시': '강원도',
+      '강릉': '강원도', '강릉시': '강원도', '속초': '강원도', '속초시': '강원도',
+      '동해': '강원도', '동해시': '강원도', '태백': '강원도', '태백시': '강원도',
+      '삼척': '강원도', '삼척시': '강원도', '홍천': '강원도', '횡성': '강원도',
+      '영월': '강원도', '평창': '강원도', '정선': '강원도', '철원': '강원도',
+      '화천': '강원도', '양구': '강원도', '인제': '강원도', '고성': '강원도',
+      '양양': '강원도',
+      
+      // 충청북도
+      '청주': '충청북도', '청주시': '충청북도', '충주': '충청북도', '충주시': '충청북도',
+      '제천': '충청북도', '제천시': '충청북도', '보은': '충청북도', '옥천': '충청북도',
+      '영동': '충청북도', '증평': '충청북도', '진천': '충청북도', '괴산': '충청북도',
+      '음성': '충청북도', '단양': '충청북도',
+      
+      // 충청남도
+      '천안': '충청남도', '천안시': '충청남도', '아산': '충청남도', '아산시': '충청남도',
+      '천안아산': '충청남도', '공주': '충청남도', '공주시': '충청남도', '보령': '충청남도',
+      '보령시': '충청남도', '서산': '충청남도', '서산시': '충청남도', '논산': '충청남도',
+      '논산시': '충청남도', '계룡': '충청남도', '계룡시': '충청남도', '당진': '충청남도',
+      '당진시': '충청남도', '금산': '충청남도', '부여': '충청남도', '서천': '충청남도',
+      '청양': '충청남도', '홍성': '충청남도', '예산': '충청남도', '태안': '충청남도',
+      
+      // 전라북도
+      '전주': '전라북도', '전주시': '전라북도', '군산': '전라북도', '군산시': '전라북도',
+      '익산': '전라북도', '익산시': '전라북도', '정읍': '전라북도', '정읍시': '전라북도',
+      '남원': '전라북도', '남원시': '전라북도', '김제': '전라북도', '김제시': '전라북도',
+      '완주': '전라북도', '진안': '전라북도', '무주': '전라북도', '장수': '전라북도',
+      '임실': '전라북도', '순창': '전라북도', '고창': '전라북도', '부안': '전라북도',
+      
+      // 전라남도
+      '목포': '전라남도', '목포시': '전라남도', '여수': '전라남도', '여수시': '전라남도',
+      '순천': '전라남도', '순천시': '전라남도', '나주': '전라남도', '나주시': '전라남도',
+      '광양': '전라남도', '광양시': '전라남도', '담양': '전라남도', '곡성': '전라남도',
+      '구례': '전라남도', '고흥': '전라남도', '보성': '전라남도', '화순': '전라남도',
+      '장흥': '전라남도', '강진': '전라남도', '해남': '전라남도', '영암': '전라남도',
+      '무안': '전라남도', '함평': '전라남도', '영광': '전라남도', '장성': '전라남도',
+      '완도': '전라남도', '진도': '전라남도', '신안': '전라남도',
+      
+      // 경상북도
+      '포항': '경상북도', '포항시': '경상북도', '경주': '경상북도', '경주시': '경상북도',
+      '김천': '경상북도', '김천시': '경상북도', '안동': '경상북도', '안동시': '경상북도',
+      '구미': '경상북도', '구미시': '경상북도', '영주': '경상북도', '영주시': '경상북도',
+      '영천': '경상북도', '영천시': '경상북도', '상주': '경상북도', '상주시': '경상북도',
+      '문경': '경상북도', '문경시': '경상북도', '경산': '경상북도', '경산시': '경상북도',
+      '군위': '경상북도', '의성': '경상북도', '청송': '경상북도', '영양': '경상북도',
+      '영덕': '경상북도', '청도': '경상북도', '고령': '경상북도', '성주': '경상북도',
+      '칠곡': '경상북도', '예천': '경상북도', '봉화': '경상북도', '울진': '경상북도',
+      '울릉': '경상북도',
+      
+      // 경상남도
+      '창원': '경상남도', '창원시': '경상남도', '진주': '경상남도', '진주시': '경상남도',
+      '통영': '경상남도', '통영시': '경상남도', '사천': '경상남도', '사천시': '경상남도',
+      '김해': '경상남도', '김해시': '경상남도', '밀양': '경상남도', '밀양시': '경상남도',
+      '거제': '경상남도', '거제시': '경상남도', '양산': '경상남도', '양산시': '경상남도',
+      '의령': '경상남도', '함안': '경상남도', '창녕': '경상남도',
+      '남해': '경상남도', '하동': '경상남도', '산청': '경상남도', '함양': '경상남도',
+      '거창': '경상남도', '합천': '경상남도',
+      
+      // 제주도
+      '제주': '제주도', '제주시': '제주도', '서귀포': '제주도', '서귀포시': '제주도',
+      '한라산': '제주도', '성산': '제주도', '우도': '제주도', '마라도': '제주도',
+      '중문': '제주도', '애월': '제주도', '한림': '제주도', '조천': '제주도',
+      '구좌': '제주도', '성산읍': '제주도', '표선': '제주도',
+      '안덕': '제주도', '대정': '제주도', '한경': '제주도',
+      
+      // 세종
+      '세종': '세종시', '세종시': '세종시',
+    };
+    
+    // 2. 주요 관광지/랜드마크 매핑
+    const landmarkMappings: { [key: string]: string } = {
+      // 서울 랜드마크
+      '남산타워': '서울', 'N서울타워': '서울', '경복궁': '서울', '창덕궁': '서울',
+      '덕수궁': '서울', '창경궁': '서울', '경희궁': '서울', '북촌한옥마을': '서울',
+      '인사동': '서울', '동대문': '서울', '남대문': '서울', '광화문': '서울',
+      '청계천': '서울', '한강': '서울', '롯데타워': '서울', '코엑스': '서울',
+      '동대문디자인플라자': '서울', 'DDP': '서울', '서울숲': '서울', '남산': '서울',
+      
+      // 부산 랜드마크
+      '해운대해수욕장': '부산', '광안대교': '부산', '태종대': '부산', '감천문화마을': '부산',
+      '자갈치시장': '부산', '국제시장': '부산', '용두산공원': '부산', '부산타워': '부산',
+      '해동용궁사': '부산', '범어사': '부산', '송정해수욕장': '부산', '다대포': '부산',
+      
+      // 제주 랜드마크
+      '한라산': '제주도', '성산일출봉': '제주도', '만장굴': '제주도', '천지연폭포': '제주도',
+      '정방폭포': '제주도', '천제연폭포': '제주도', '주상절리': '제주도', '섭지코지': '제주도',
+      '우도': '제주도', '마라도': '제주도', '협재해수욕장': '제주도', '함덕해수욕장': '제주도',
+      
+      // 경주 랜드마크
+      '불국사': '경상북도', '석굴암': '경상북도', '첨성대': '경상북도', '안압지': '경상북도',
+      '동궁과월지': '경상북도', '대릉원': '경상북도', '천마총': '경상북도', '경주월드': '경상북도',
+      
+      // 강원도 랜드마크
+      '설악산': '강원도', '오대산': '강원도', '경포대': '강원도', '정동진': '강원도',
+      '낙산사': '강원도', '속초해수욕장': '강원도', '남이섬': '강원도', '대관령': '강원도',
+    };
+    
+    // 3. 교통 관련 키워드로 지역 추출
+    const transportPatterns = [
+      // KTX/기차역
+      /([가-힣]+)역?\s*(?:KTX|기차|열차|역)/gi,
+      /KTX\s*([가-힣]+)/gi,
+      // 공항
+      /([가-힣]+)\s*(?:국제)?공항/gi,
+      /([가-힣]+)\s*(?:에서|부터|출발)/gi,
+      /(?:도착|도착지|목적지)\s*:\s*([가-힣]+)/gi,
+      // 버스터미널
+      /([가-힣]+)\s*(?:버스)?터미널/gi,
+      /([가-힣]+)\s*(?:고속|시외)?버스/gi,
+    ];
+    
+    // 4. 상호명에서 지역 정보 추출
+    const businessPatterns = [
+      /([가-힣]+)\s*(?:점|지점|매장|센터|몰|백화점|아울렛)/gi,
+      /(?:호텔|모텔|펜션|리조트|게스트하우스|민박|텔)\s*([가-힣]+)/gi,
+      /([가-힣]+)\s*(?:맛집|식당|카페|베이커리|빵집|커피|치킨|피자)/gi,
+      /([가-힣A-Za-z]+(?:마트|백화점|아울렛|면세점|편의점|스토어))/gi,
+    ];
+    
+    // 5. 지역 추출 시작
+    let foundLocation = '';
+    let foundParentLocation = '';
+    
+    // 5-1. 직접적인 지역명 매칭
+    for (const [key, value] of Object.entries(locationMappings)) {
+      const regex = new RegExp(`\\b${key}\\b`, 'gi');
+      if (regex.test(normalizedText)) {
+        foundLocation = key;
+        foundParentLocation = value;
+        console.log('모달 - 지역 직접 매칭:', key, '→', value);
+        break;
+      }
+    }
+    
+    // 5-2. 랜드마크로 지역 추출
+    if (!foundLocation) {
+      for (const [landmark, region] of Object.entries(landmarkMappings)) {
+        if (normalizedText.includes(landmark)) {
+          foundLocation = landmark;
+          foundParentLocation = region;
+          console.log('모달 - 랜드마크 매칭:', landmark, '→', region);
+          break;
         }
-      } catch (error) {
-        console.error('항공권 정보 추출 중 오류:', error);
       }
     }
-
-    if (!info.location) {
-      // 기존 지역 패턴 (구/동 단위)
-      const locationPattern = new RegExp(Object.keys(LOCATION_MAPPING).join('|'), 'g');
-      const locationMatch = text.match(locationPattern);
-      if (locationMatch) {
-        info.location = locationMatch[0];
-        info.parentLocation = LOCATION_MAPPING[info.location as keyof typeof LOCATION_MAPPING];
+    
+    // 5-3. 교통 패턴으로 지역 추출
+    if (!foundLocation) {
+      for (const pattern of transportPatterns) {
+        const matches = normalizedText.match(pattern);
+        if (matches && matches[1]) {
+          const place = matches[1].trim();
+          if (locationMappings[place]) {
+            foundLocation = place;
+            foundParentLocation = locationMappings[place];
+            console.log('모달 - 교통 패턴 매칭:', place, '→', locationMappings[place]);
+            break;
+          }
+        }
       }
     }
-
-    // 날짜 패턴 (YYYY-MM-DD 또는 YYYY/MM/DD 또는 YYYY.MM.DD)
-    const datePattern = /\d{4}[-/.](0[1-9]|1[0-2])[-/.](0[1-9]|[12]\d|3[01])/g;
-    const dateMatch = text.match(datePattern);
+    
+    // 5-4. 상호명 패턴으로 지역 추출
+    if (!foundLocation) {
+      for (const pattern of businessPatterns) {
+        const matches = normalizedText.match(pattern);
+        if (matches && matches[1]) {
+          const place = matches[1].trim();
+          if (locationMappings[place]) {
+            foundLocation = place;
+            foundParentLocation = locationMappings[place];
+            console.log('모달 - 상호명 패턴 매칭:', place, '→', locationMappings[place]);
+            break;
+          }
+        }
+      }
+    }
+    
+    // 6. 결과 설정
+    if (foundLocation) {
+      info.location = foundLocation;
+      info.parentLocation = foundParentLocation;
+    }
+    
+    // 7. 날짜 추출 (더 정확한 패턴)
+    const datePatterns = [
+      /(\d{4})[-/.년]\s*(\d{1,2})[-/.월]\s*(\d{1,2})(?:일)?/g,
+      /(\d{2})[-/.년]\s*(\d{1,2})[-/.월]\s*(\d{1,2})(?:일)?/g,
+      /(\d{1,2})\/(\d{1,2})\/(\d{2,4})/g,
+    ];
+    
+    for (const pattern of datePatterns) {
+      const dateMatch = normalizedText.match(pattern);
     if (dateMatch) {
       info.date = dateMatch[0];
+        console.log('모달 - 날짜 추출:', info.date);
+        break;
+      }
     }
-
-    // 항공사/상호명 패턴
-    const airlinePattern = /(제주항공|대한항공|아시아나|에어부산|티웨이|진에어|이스타|에어서울)/;
-    const airlineMatch = text.match(airlinePattern);
-    if (airlineMatch) {
-      info.storeName = airlineMatch[0];
-    } else {
-      // 일반 상호명 패턴
-      const storePattern = /[\w가-힣]{2,}(?:점|매장|마트|백화점|센터|카페|레스토랑|호텔|리조트)/g;
-      const storeMatch = text.match(storePattern);
+    
+    // 8. 상호명 추출 (개선된 패턴)
+    const storeNamePatterns = [
+      // 항공사
+      /(제주항공|대한항공|아시아나|에어부산|티웨이|진에어|이스타|에어서울|에어프레미아)/gi,
+      // 교통
+      /(코레일|KORAIL|SRT|KTX|무궁화|새마을)/gi,
+      // 숙박
+      /([가-힣]+(?:호텔|모텔|펜션|리조트|게스트하우스|민박|텔))/gi,
+      // 음식점
+      /([가-힣]+(?:식당|레스토랑|카페|베이커리|빵집|커피|치킨|피자))/gi,
+      // 기타
+      /([가-힣A-Za-z]+(?:마트|백화점|아울렛|면세점|편의점|스토어))/gi,
+    ];
+    
+    if (!info.storeName) {
+      for (const pattern of storeNamePatterns) {
+        const storeMatch = normalizedText.match(pattern);
       if (storeMatch) {
         info.storeName = storeMatch[0];
+          console.log('모달 - 상호명 추출:', info.storeName);
+          break;
+        }
       }
     }
 
+    console.log('모달 - 최종 추출 정보:', info);
     return info;
   };
 
@@ -194,34 +430,100 @@ export default function CreateReviewModal({ isOpen, onClose, onSubmit, requirePr
   const extractTextFromImage = async (file: File) => {
     setIsProcessing(true);
     try {
-      const reader = new FileReader();
-      const imageDataPromise = new Promise<string>((resolve) => {
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
+      console.log('모달 - 영수증 분석 시작:', file.name, file.size);
       
-      const imageData = await imageDataPromise;
-      
+      // FormData 방식으로 변경
+      const formData = new FormData();
+      formData.append('image', file);
+
       const response = await fetch('/api/vision', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ image: imageData }),
+        body: formData, // JSON 대신 FormData 사용
       });
-      
+
+      console.log('모달 - Vision API 응답 상태:', response.status);
+
+      if (!response.ok) {
+        const errorData = await response.text();
+        console.error('모달 - Vision API 오류 응답:', errorData);
+        throw new Error(`영수증 분석 실패: ${response.status}`);
+      }
+
       const data = await response.json();
-      if (data.text) {
-        const info = extractTravelInfo(data.text);
+      console.log('모달 - Vision API 전체 응답:', data);
+      
+      if (data.success && data.extractedText) {
+        const info = extractTravelInfo(data.extractedText);
         setExtractedInfo(info);
         
-        // 지역 정보가 있으면 자동으로 입력
-        if (info.parentLocation) {
-          setLocation(info.parentLocation);
+        // Vision API에서 제공하는 mainLocation을 우선 사용
+        let locationToSet = '';
+        
+        if (data.mainLocation) {
+          // Vision API가 이미 추출한 주요 지역 사용
+          locationToSet = data.mainLocation;
+          console.log('모달 - Vision API mainLocation 사용:', locationToSet);
+        } else if (info.parentLocation || info.location) {
+          // 대체 방법: extractTravelInfo 결과 사용
+          locationToSet = info.parentLocation || info.location || '';
+          console.log('모달 - extractTravelInfo 결과 사용:', locationToSet);
         }
+        
+        // locationInfo를 extractedInfo에 추가
+        if (data.locationInfo) {
+          const locationInfo = data.locationInfo;
+          // 도시 정보가 있으면 사용
+          if (locationInfo.cities && locationInfo.cities.length > 0) {
+            const city = locationInfo.cities[0];
+            // locationMappings에서 상위 지역 찾기
+            const parentLocation = LOCATION_MAPPING[city as keyof typeof LOCATION_MAPPING] || city;
+            setExtractedInfo({
+              ...info,
+              location: city,
+              parentLocation: parentLocation
+            });
+            // 지역 설정 업데이트
+            if (!locationToSet && city) {
+              locationToSet = parentLocation || city;
+            }
+          }
+        }
+        
+        if (locationToSet) {
+          setLocation(locationToSet);
+          console.log('모달 - 지역 정보 자동 설정:', locationToSet);
+        }
+
+        alert(`✅ 영수증 분석 완료!
+
+📝 추출된 정보:
+• 지역: ${locationToSet || info.parentLocation || info.location || '없음'}
+• 상호명: ${info.storeName || '없음'}
+• 날짜: ${info.date || '없음'}
+
+정보를 확인하고 필요시 수정해주세요.`);
+      } else {
+        console.error('모달 - API 응답에 success나 extractedText가 없음:', data);
+        throw new Error('텍스트 추출 실패');
       }
     } catch (error) {
-      console.error('이미지 처리 중 오류 발생:', error);
+      console.error('모달 - 영수증 분석 상세 오류:', error);
+      
+      let errorMessage = '영수증 분석 중 오류가 발생했습니다.';
+      
+      if (error instanceof Error) {
+        if (error.message.includes('401')) {
+          errorMessage = 'Google API 키가 유효하지 않습니다.';
+        } else if (error.message.includes('403')) {
+          errorMessage = 'Google Vision API 접근 권한이 없습니다.';
+        } else if (error.message.includes('429')) {
+          errorMessage = 'API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      alert(`❌ ${errorMessage}\n\n수동으로 정보를 입력해주세요.`);
     } finally {
       setIsProcessing(false);
     }
@@ -358,12 +660,12 @@ export default function CreateReviewModal({ isOpen, onClose, onSubmit, requirePr
     }
   };
 
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm transition-all">
+  const modalContent = (
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm transition-all overflow-y-auto">
       <div
         ref={modalRef}
         tabIndex={-1}
-        className={`${getModalStyle()} rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden transition-colors duration-300 transform animate-modal-scale`}
+        className={`${getModalStyle()} rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden transition-colors duration-300 transform animate-modal-scale my-auto relative`}
       >
         <div className="flex justify-between items-center px-8 py-6 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-2xl font-bold text-gray-800 dark:text-white">리뷰 작성하기</h2>
@@ -455,6 +757,7 @@ export default function CreateReviewModal({ isOpen, onClose, onSubmit, requirePr
                           setImagePreview(null);
                           setScanComplete(false);
                           setExtractedInfo({});
+                          setLocation(''); // 지역 정보도 초기화
                         }}
                         className="bg-red-500 text-white rounded-full p-3 transform hover:scale-110 transition-transform shadow-lg border-none"
                       >
@@ -468,24 +771,32 @@ export default function CreateReviewModal({ isOpen, onClose, onSubmit, requirePr
                       </div>
                     )}
                     
-                    {/* 추출된 정보 표시 */}
+                    {/* 추출된 정보 표시 (호버 시 표시) */}
                     {Object.keys(extractedInfo).length > 0 && (
-                      <div className="absolute bottom-3 left-3 right-3 bg-white dark:bg-gray-800 bg-opacity-90 dark:bg-opacity-90 p-3 rounded-lg shadow-lg space-y-1">
-                        {(extractedInfo.location || extractedInfo.parentLocation) && (
-                          <p className="text-sm text-gray-800 dark:text-gray-200">
-                            <span className="font-medium">지역:</span> {formatLocation(extractedInfo.location || '', extractedInfo.parentLocation)}
+                      <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-help">
+                        <div className="bg-white dark:bg-gray-800 bg-opacity-95 dark:bg-opacity-95 p-4 rounded-lg shadow-lg space-y-2 max-w-xs text-center">
+                          <div className="text-green-600 dark:text-green-400 font-bold text-lg mb-2">
+                            ✅ 분석 완료!
+                          </div>
+                          {(extractedInfo.location || extractedInfo.parentLocation) && (
+                            <p className="text-sm text-gray-800 dark:text-gray-200">
+                              <span className="font-medium">🗺️ 지역:</span> {formatLocation(extractedInfo.location || '', extractedInfo.parentLocation)}
+                            </p>
+                          )}
+                          {extractedInfo.storeName && (
+                            <p className="text-sm text-gray-800 dark:text-gray-200">
+                              <span className="font-medium">🏪 상호명:</span> {extractedInfo.storeName}
+                            </p>
+                          )}
+                          {extractedInfo.date && (
+                            <p className="text-sm text-gray-800 dark:text-gray-200">
+                              <span className="font-medium">📅 날짜:</span> {extractedInfo.date}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                            호버해서 결과 확인
                           </p>
-                        )}
-                        {extractedInfo.storeName && (
-                          <p className="text-sm text-gray-800 dark:text-gray-200">
-                            <span className="font-medium">상호명:</span> {extractedInfo.storeName}
-                          </p>
-                        )}
-                        {extractedInfo.date && (
-                          <p className="text-sm text-gray-800 dark:text-gray-200">
-                            <span className="font-medium">날짜:</span> {extractedInfo.date}
-                          </p>
-                        )}
+                        </div>
                       </div>
                     )}
                   </div>
@@ -650,4 +961,11 @@ export default function CreateReviewModal({ isOpen, onClose, onSubmit, requirePr
       </div>
     </div>
   );
+
+  // Portal을 사용하여 body에 직접 렌더링
+  if (typeof window !== 'undefined') {
+    return createPortal(modalContent, document.body);
+  }
+
+  return modalContent;
 } 

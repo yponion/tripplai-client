@@ -9,7 +9,7 @@ import { getDate } from "@/utils/dateUtils";
 
 export default function FestivalList() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [submittedQuery, setSubmittedQuery] = useState(""); // Enter나 클릭 시 확정된 검색어
+  const [submittedQuery, setSubmittedQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const { data, isLoading, error } = useQuery<FestivalResponse>({
@@ -55,7 +55,6 @@ export default function FestivalList() {
     setSuggestions([]);
   };
 
-  // 필터된 축제 목록 (검색어가 있을 경우)
   const filteredItems = submittedQuery
     ? items?.filter((festival) =>
         [festival.title, festival.addr1]
@@ -82,7 +81,7 @@ export default function FestivalList() {
           className="w-full px-4 py-3 border border-gray-300 rounded-full shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-400 transition"
         />
         {suggestions.length > 0 && (
-          <ul className="absolute z-[9999] w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto">
+          <ul className="absolute z-[9999] w-full bg-white border border-gray-300 rounded-md mt-1 max-h-60 overflow-y-auto list-none">
             {suggestions.map((suggestion, index) => (
               <li
                 key={index}
@@ -104,7 +103,7 @@ export default function FestivalList() {
       )}
 
       {/* 축제 리스트 */}
-      <ul className="w-full max-w-screen-2xl list-none p-0 transition-all grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+      <ul className="list-none w-full max-w-screen-2xl p-0 transition-all grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
         {sortedItems?.map((festival) => (
           <li key={festival.contentid}>
             <Card festival={festival} />

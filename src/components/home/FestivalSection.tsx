@@ -1,31 +1,30 @@
-'use client'
+"use client";
 
-import { Box, Container, Heading, Image as ChakraImage, Text, Spinner, Center } from '@chakra-ui/react'
-import { FaMapMarkerAlt, FaClock } from 'react-icons/fa'
-import Link from 'next/link'
-import Button from '@/components/common/Button'
-import { useState, useEffect } from 'react'
+import { Box, Container, Heading, Image as ChakraImage, Text, Spinner, Center } from "@chakra-ui/react";
+import { FaMapMarkerAlt, FaClock } from "react-icons/fa";
+import Link from "next/link";
+import Button from "@/components/common/Button";
+import { useState, useEffect } from "react";
 
 // API 응답 타입 정의
 interface Course {
-  courseId: number
-  contentId: string
-  thumbnailUrl: string
-  title: string
-  area: string
-  likeCount: number
-  rating?: number
+  courseId: number;
+  contentId: string;
+  thumbnailUrl: string;
+  title: string;
+  area: string;
+  likeCount: number;
+  rating?: number;
 }
 
 // 정확히 표시할 코스 개수
 const COURSE_COUNT = 8;
 
-
 // 이미지 크기 확인 함수
 function isImageLargeEnough(url: string) {
   return new Promise<boolean>((resolve) => {
     // HTMLImageElement 사용으로 타입 문제 해결
-    const img = document.createElement('img');
+    const img = document.createElement("img");
     img.onload = () => {
       if (img.width >= 300 && img.height >= 300) {
         resolve(true);
@@ -49,7 +48,7 @@ async function filterValidImages(courses: Course[]) {
       console.log(`중복 이미지 발견: ${course.thumbnailUrl}, 코스 제외: ${course.title}`);
       continue;
     }
-    
+
     const valid = await isImageLargeEnough(course.thumbnailUrl);
     if (valid) {
       filtered.push(course);
@@ -62,11 +61,11 @@ async function filterValidImages(courses: Course[]) {
 
 // API에서 코스 데이터를 가져오는 함수
 async function fetchCourseData(page = 0, limit = 50) {
-  const response = await fetch(`/api/course?page=${page}&limit=${limit}`, {
-    mode: 'cors',
-    cache: 'no-store',
+  const response = await fetch(`http://localhost:8080/api/course?page=${page}&limit=${limit}`, {
+    mode: "cors",
+    cache: "no-store",
   });
-  
+
   const data = await response.json();
   return Array.isArray(data) ? data : [];
 }
@@ -76,15 +75,15 @@ async function fetchValidCoursesUntilThreshold(threshold = COURSE_COUNT, maxAtte
   let validCourses: Course[] = [];
   let page = 0;
   let attempts = 0;
-  
+
   // 유효한 코스가 threshold에 도달하거나 최대 시도 횟수에 도달할 때까지 반복
   while (validCourses.length < threshold && attempts < maxAttempts) {
     console.log(`시도 ${attempts + 1}: 현재 유효한 코스 ${validCourses.length}개, 목표 ${threshold}개`);
-    
+
     const newCourses = await fetchCourseData(page, 50);
-    
+
     if (newCourses.length === 0) {
-      console.log('더 이상 가져올 데이터가 없습니다.');
+      console.log("더 이상 가져올 데이터가 없습니다.");
       if (validCourses.length < threshold) {
         console.log(`충분한 코스를 찾지 못했습니다. 현재 ${validCourses.length}개, 목표 ${threshold}개`);
         // 더 많은 시도를 위해 페이지를 초기화하고 다시 시작
@@ -93,15 +92,15 @@ async function fetchValidCoursesUntilThreshold(threshold = COURSE_COUNT, maxAtte
       attempts++;
       continue;
     }
-    
+
     // 새로 가져온 코스에서 유효한 이미지만 필터링 (중복 제거)
     const newValidCourses = await filterValidImages(newCourses);
     console.log(`페이지 ${page}에서 ${newCourses.length}개 중 ${newValidCourses.length}개의 유효한 코스 발견`);
-    
+
     // 누적된 유효한 코스에 추가 (중복 체크)
     for (const course of newValidCourses) {
       // 이미 같은 코스 ID가 있는지 확인
-      if (!validCourses.some(c => c.courseId === course.courseId)) {
+      if (!validCourses.some((c) => c.courseId === course.courseId)) {
         validCourses.push(course);
         if (validCourses.length >= threshold) {
           break; // 목표 개수 달성
@@ -109,20 +108,22 @@ async function fetchValidCoursesUntilThreshold(threshold = COURSE_COUNT, maxAtte
       }
     }
     console.log(`누적된 유효한 코스: ${validCourses.length}개`);
-    
+
     page++;
     attempts++;
-    
+
     // 페이지가 너무 많이 증가하면 다시 처음부터 시작
     if (page > 10) {
       page = 0;
     }
   }
-  
+
   if (validCourses.length < threshold) {
-    console.warn(`최대 시도 횟수(${maxAttempts})에 도달했지만 ${threshold}개를 채우지 못했습니다. 현재 ${validCourses.length}개`);
+    console.warn(
+      `최대 시도 횟수(${maxAttempts})에 도달했지만 ${threshold}개를 채우지 못했습니다. 현재 ${validCourses.length}개`
+    );
   }
-  
+
   // 정확히 threshold 개수만큼만 반환
   const result = validCourses.slice(0, threshold);
   console.log(`최종 반환되는 유효한 코스: ${result.length}개`);
@@ -130,24 +131,24 @@ async function fetchValidCoursesUntilThreshold(threshold = COURSE_COUNT, maxAtte
 }
 
 export default function RecommendedCoursesSection() {
-  const [courses, setCourses] = useState<Course[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const [courses, setCourses] = useState<Course[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const loadCourses = async () => {
       try {
-        console.log('코스 로딩 시작...');
+        console.log("코스 로딩 시작...");
         const validCourses = await fetchValidCoursesUntilThreshold(COURSE_COUNT);
-        
+
         // 정확히 COURSE_COUNT개만 설정
         setCourses(validCourses.slice(0, COURSE_COUNT));
         console.log(`최종 설정된 코스 수: ${validCourses.slice(0, COURSE_COUNT).length}`);
-        
+
         setIsLoading(false);
       } catch (err) {
-        console.error('API 요청 오류:', err);
-        setError(err instanceof Error ? err.message : '알 수 없는 오류가 발생했습니다');
+        console.error("API 요청 오류:", err);
+        setError(err instanceof Error ? err.message : "알 수 없는 오류가 발생했습니다");
         setIsLoading(false);
       }
     };
@@ -167,7 +168,7 @@ export default function RecommendedCoursesSection() {
           </Center>
         </Container>
       </Box>
-    )
+    );
   }
 
   if (error) {
@@ -182,7 +183,7 @@ export default function RecommendedCoursesSection() {
           </Center>
         </Container>
       </Box>
-    )
+    );
   }
 
   return (
@@ -191,23 +192,28 @@ export default function RecommendedCoursesSection() {
         <Heading as="h2" className="section-title">
           추천 인기 여행 코스
         </Heading>
-        
+
         <Box textAlign="center" mt={4} mb={6}>
-          <Link href="/popular-courses" passHref legacyBehavior>
-            <Button 
-              variant="primary" 
-              size="lg"
-              className="ml-2 hover:bg-pink-600"
-            >
+          <Link href="/popular-courses" passHref>
+            <Button variant="primary" size="lg" className="ml-2 hover:bg-pink-600">
               더 많은 코스 보기
             </Button>
           </Link>
         </Box>
-        
-        <Box className="festival-grid" display="grid" gridTemplateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }} gap={6}>
+
+        <Box
+          className="festival-grid"
+          display="grid"
+          gridTemplateColumns={{ base: "1fr", md: "repeat(2, 1fr)", lg: "repeat(4, 1fr)" }}
+          gap={6}
+        >
           {courses.slice(0, COURSE_COUNT).map((course) => (
-            <Link key={course.courseId} href={`/travel/popular/${course.courseId}`} style={{ textDecoration: 'none' }}>
-              <Box className="festival-card" cursor="pointer" _hover={{ transform: 'translateY(-5px)', transition: 'transform 0.3s ease' }}>
+            <Link key={course.courseId} href={`/travel/popular/${course.courseId}`} style={{ textDecoration: "none" }}>
+              <Box
+                className="festival-card"
+                cursor="pointer"
+                _hover={{ transform: "translateY(-5px)", transition: "transform 0.3s ease" }}
+              >
                 <Box className="festival-image" height="200px" overflow="hidden">
                   <ChakraImage
                     src={course.thumbnailUrl}
@@ -223,11 +229,15 @@ export default function RecommendedCoursesSection() {
                   </Text>
                   <Box className="festival-date" display="flex" alignItems="center" mb={2}>
                     <Box as={FaClock} mr={2} color="gray.500" />
-                    <Text fontSize="sm" color="gray.600">{course.rating ? `평점: ${course.rating}` : '새로운 코스'}</Text>
+                    <Text fontSize="sm" color="gray.600">
+                      {course.rating ? `평점: ${course.rating}` : "새로운 코스"}
+                    </Text>
                   </Box>
                   <Box className="festival-location" display="flex" alignItems="center">
                     <Box as={FaMapMarkerAlt} mr={2} color="gray.500" />
-                    <Text fontSize="sm" color="gray.600">{course.area}</Text>
+                    <Text fontSize="sm" color="gray.600">
+                      {course.area}
+                    </Text>
                   </Box>
                 </Box>
               </Box>
@@ -236,8 +246,8 @@ export default function RecommendedCoursesSection() {
         </Box>
       </Container>
     </Box>
-  )
+  );
 }
 
 // 기존 이름과의 호환성을 위한 별칭
-export { RecommendedCoursesSection as FestivalSection } 
+export { RecommendedCoursesSection as FestivalSection };

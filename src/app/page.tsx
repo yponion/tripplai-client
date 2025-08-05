@@ -136,7 +136,7 @@ export default function Home() {
         <title>Tripplai - AI로 계획하는 당신만의 특별한 여행</title>
         <meta
           name="description"
-          content="목적지와 일정만 입력하면 AI가 당신만을 위한 최적의 여행 코스를 즉시 추천해 드립니다"
+          content="목적지와 일정만 입력하면 AI가 당신만을 위한 최적의 여행 코스를 즉시 해 드립니다"
         />
         <meta property="og:title" content="Tripplai - AI로 계획하는 당신만의 특별한 여행" />
         <meta
@@ -153,6 +153,7 @@ export default function Home() {
       {/* 여행 리뷰 섹션 */}
       <ReviewsSection />
 
+      {/* 추천 인기 여행 코스 섹션 */}
       <FestivalSection />
 
       {/* 필터 모달 - Tailwind CSS 사용 */}

@@ -4,13 +4,13 @@ import React, { useEffect, useState } from "react";
 import { Inter } from "next/font/google";
 import "./globals.css";
 import "../styles/home.css";
-import { NextAuthProvider } from "@/components/providers/NextAuthProvider";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { Toaster } from 'react-hot-toast';
 import { MSWProvider } from "@/components/providers/MSWProvider";
 import dynamic from "next/dynamic";
-import RQProvider from "@/components/providers/RQProvider"; 
-import { ThemeMode } from '@/hooks/useDarkMode'; 
+import RQProvider from "@/components/providers/RQProvider";
+import { ThemeMode } from "@/hooks/useDarkMode";
 
 const KakaoScript = dynamic(() => import("../components/KakaoScript"), {
   ssr: false,
@@ -25,106 +25,110 @@ if (typeof window !== "undefined" && process.env.NEXT_PUBLIC_API_MOCKING === "tr
 }
 
 // 다크모드 초기화 및 관리 컴포넌트 (클라이언트 전용)
-const ThemeInitializer = dynamic(() => Promise.resolve(() => {
-  const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
-    if (typeof window !== 'undefined') {
-      return (localStorage.getItem('themeMode') as ThemeMode) || 'original';
-    }
-    return 'original';
-  });
-  
-  const [isInitialized, setIsInitialized] = useState(false);
-
-  useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
-    // 페이지 로드 시 localStorage에서 테마 설정을 가져와 적용
-    const savedThemeMode = localStorage.getItem('themeMode') as ThemeMode | null;
-    const initialTheme = savedThemeMode || 'original';
-    
-    // 초기화 시에도 상태를 설정합니다
-    if (initialTheme !== themeMode) {
-      setThemeMode(initialTheme);
-    }
-    
-    // HTML에 클래스 적용
-    updateThemeClasses(initialTheme);
-    setIsInitialized(true);
-
-    // 테마 변경 이벤트 감지
-    const handleStorageChange = (e: StorageEvent) => {
-      if (e.key === 'themeMode') {
-        const currentTheme = e.newValue as ThemeMode | null;
-        if (currentTheme && currentTheme !== themeMode) {
-          setThemeMode(currentTheme);
-          updateThemeClasses(currentTheme);
+const ThemeInitializer = dynamic(
+  () =>
+    Promise.resolve(() => {
+      const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
+        if (typeof window !== "undefined") {
+          return (localStorage.getItem("themeMode") as ThemeMode) || "original";
         }
-      }
-    };
+        return "original";
+      });
 
-    window.addEventListener('storage', handleStorageChange);
-    
-    // 커스텀 이벤트 리스너 추가
-    const handleThemeChange = (e: CustomEvent) => {
-      const newTheme = e.detail as ThemeMode;
-      if (newTheme !== themeMode) {
-        setThemeMode(newTheme);
-        updateThemeClasses(newTheme);
-      }
-    };
+      const [isInitialized, setIsInitialized] = useState(false);
 
-    window.addEventListener('themeChange', handleThemeChange as EventListener);
+      useEffect(() => {
+        if (typeof window === "undefined") return;
 
-    // 페이지 가시성 변경 이벤트 처리 (탭 전환 시 테마 동기화)
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        const currentTheme = localStorage.getItem('themeMode') as ThemeMode | null;
-        if (currentTheme && currentTheme !== themeMode) {
-          setThemeMode(currentTheme);
-          updateThemeClasses(currentTheme);
+        // 페이지 로드 시 localStorage에서 테마 설정을 가져와 적용
+        const savedThemeMode = localStorage.getItem("themeMode") as ThemeMode | null;
+        const initialTheme = savedThemeMode || "original";
+
+        // 초기화 시에도 상태를 설정합니다
+        if (initialTheme !== themeMode) {
+          setThemeMode(initialTheme);
         }
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
 
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('themeChange', handleThemeChange as EventListener);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [themeMode]);
+        // HTML에 클래스 적용
+        updateThemeClasses(initialTheme);
+        setIsInitialized(true);
 
-  const updateThemeClasses = (mode: ThemeMode) => {
-    if (typeof document === 'undefined') return;
-    
-    const htmlElement = document.documentElement;
-    
-    // 모든 테마 클래스 제거
-    htmlElement.classList.remove('dark', 'light', 'original');
-    
-    // 해당 테마 클래스 추가
-    htmlElement.classList.add(mode);
-    
-    // 다크모드 특별 처리 (tailwind dark: 선택자를 위해)
-    if (mode === 'dark') {
-      htmlElement.classList.add('dark');
-      document.body.style.backgroundColor = '#000000';
-      document.body.style.color = '#ffffff';
-    } else if (mode === 'light') {
-      document.body.style.backgroundColor = '#ffffff';
-      document.body.style.color = '#111827';
-    } else {
-      document.body.style.backgroundColor = '#ffffff';
-      document.body.style.color = '#111827';
-    }
+        // 테마 변경 이벤트 감지
+        const handleStorageChange = (e: StorageEvent) => {
+          if (e.key === "themeMode") {
+            const currentTheme = e.newValue as ThemeMode | null;
+            if (currentTheme && currentTheme !== themeMode) {
+              setThemeMode(currentTheme);
+              updateThemeClasses(currentTheme);
+            }
+          }
+        };
 
-    // 효과 확인을 위한 콘솔 메시지
-    console.log('테마 업데이트 완료:', mode, new Date().toLocaleTimeString());
-  };
-  
-  return null;
-}), { ssr: false });
+        window.addEventListener("storage", handleStorageChange);
+
+        // 커스텀 이벤트 리스너 추가
+        const handleThemeChange = (e: CustomEvent) => {
+          const newTheme = e.detail as ThemeMode;
+          if (newTheme !== themeMode) {
+            setThemeMode(newTheme);
+            updateThemeClasses(newTheme);
+          }
+        };
+
+        window.addEventListener("themeChange", handleThemeChange as EventListener);
+
+        // 페이지 가시성 변경 이벤트 처리 (탭 전환 시 테마 동기화)
+        const handleVisibilityChange = () => {
+          if (document.visibilityState === "visible") {
+            const currentTheme = localStorage.getItem("themeMode") as ThemeMode | null;
+            if (currentTheme && currentTheme !== themeMode) {
+              setThemeMode(currentTheme);
+              updateThemeClasses(currentTheme);
+            }
+          }
+        };
+
+        document.addEventListener("visibilitychange", handleVisibilityChange);
+
+        return () => {
+          window.removeEventListener("storage", handleStorageChange);
+          window.removeEventListener("themeChange", handleThemeChange as EventListener);
+          document.removeEventListener("visibilitychange", handleVisibilityChange);
+        };
+      }, [themeMode]);
+
+      const updateThemeClasses = (mode: ThemeMode) => {
+        if (typeof document === "undefined") return;
+
+        const htmlElement = document.documentElement;
+
+        // 모든 테마 클래스 제거
+        htmlElement.classList.remove("dark", "light", "original");
+
+        // 해당 테마 클래스 추가
+        htmlElement.classList.add(mode);
+
+        // 다크모드 특별 처리 (tailwind dark: 선택자를 위해)
+        if (mode === "dark") {
+          htmlElement.classList.add("dark");
+          document.body.style.backgroundColor = "#000000";
+          document.body.style.color = "#ffffff";
+        } else if (mode === "light") {
+          document.body.style.backgroundColor = "#ffffff";
+          document.body.style.color = "#111827";
+        } else {
+          document.body.style.backgroundColor = "#ffffff";
+          document.body.style.color = "#111827";
+        }
+
+        // 효과 확인을 위한 콘솔 메시지
+        console.log("테마 업데이트 완료:", mode, new Date().toLocaleTimeString());
+      };
+
+      return null;
+    }),
+  { ssr: false }
+);
 
 export default function RootLayout({
   children,
@@ -150,17 +154,34 @@ export default function RootLayout({
         <ThemeInitializer />
         <KakaoScript />
         <MSWProvider>
-          <NextAuthProvider>
-            <RQProvider>
-              {React.Children.map(children, (child, i) =>
-                React.isValidElement(child) ? React.cloneElement(child, { key: `child-${i}` }) : child
-              )}
-              {React.Children.map(modal, (child, i) =>
-                React.isValidElement(child) ? React.cloneElement(child, { key: `modal-${i}` }) : child
-              )}
-              <ToastContainer />
-            </RQProvider>
-          </NextAuthProvider>
+          <RQProvider>
+            {React.Children.map(children, (child, i) =>
+              React.isValidElement(child) ? React.cloneElement(child, { key: `child-${i}` }) : child
+            )}
+            {React.Children.map(modal, (child, i) =>
+              React.isValidElement(child) ? React.cloneElement(child, { key: `modal-${i}` }) : child
+            )}
+            <ToastContainer />
+            <Toaster
+              position="top-center"
+              toastOptions={{
+                style: {
+                  background: '#363636',
+                  color: '#fff',
+                },
+                success: {
+                  style: {
+                    background: '#10b981',
+                  },
+                },
+                error: {
+                  style: {
+                    background: '#ef4444',
+                  },
+                },
+              }}
+            />
+          </RQProvider>
         </MSWProvider>
       </body>
     </html>

@@ -104,7 +104,9 @@ export default function CheckoutPage() {
                 orderName,
                 successUrl: window.location.origin + "/pay/success",
                 failUrl: window.location.origin + "/pay/fail",
+                // @ts-ignore
                 customerEmail: user?.email,
+                // @ts-ignore
                 customerName: user?.nickname,
                 customerMobilePhone: "01012341234",
               });

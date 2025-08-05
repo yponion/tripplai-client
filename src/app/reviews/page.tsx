@@ -13,31 +13,31 @@ import { motion, AnimatePresence } from "framer-motion";
 // 지역 아이콘 컴포넌트
 const LocationIcon = ({ location }: { location: string }) => {
   const icons: { [key: string]: string } = {
-    '서울': '🏙️',
-    '인천': '✈️',
-    '대전': '🏛️',
-    '부산': '🌊',
-    '울산': '⚓',
-    '대구': '🍎',
-    '전체': '🗺️'
+    서울: "🏙️",
+    인천: "✈️",
+    대전: "🏛️",
+    부산: "🌊",
+    울산: "⚓",
+    대구: "🍎",
+    전체: "🗺️",
   };
-  return <span className="text-2xl">{icons[location] || '📍'}</span>;
+  return <span className="text-2xl">{icons[location] || "📍"}</span>;
 };
 
 // 지역 목록
-const LOCATIONS = ['전체', '서울', '인천', '대전', '부산', '울산', '대구'];
+const LOCATIONS = ["전체", "서울", "인천", "대전", "부산", "울산", "대구"];
 
 // 리뷰 목록을 가져오는 클라이언트 컴포넌트
-function ReviewsList({ 
-  page, 
-  size, 
-  searchQuery, 
+function ReviewsList({
+  page,
+  size,
+  searchQuery,
   sortBy,
   locationFilter,
-  ratingFilter 
-}: { 
-  page: number; 
-  size: number; 
+  ratingFilter,
+}: {
+  page: number;
+  size: number;
   searchQuery: string;
   sortBy: string;
   locationFilter: string;
@@ -73,36 +73,34 @@ function ReviewsList({
 
     // 검색어 필터링
     if (searchQuery) {
-      filtered = filtered.filter(review => 
-        review.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        review.content.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(
+        (review) =>
+          review.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          review.content.toLowerCase().includes(searchQuery.toLowerCase())
       );
     }
 
     // 위치 필터링 - 일단 제목이나 내용에서 지역명 검색
-    if (locationFilter && locationFilter !== '전체') {
-      filtered = filtered.filter(review => 
-        review.title.includes(locationFilter) ||
-        review.content.includes(locationFilter)
+    if (locationFilter && locationFilter !== "전체") {
+      filtered = filtered.filter(
+        (review) => review.title.includes(locationFilter) || review.content.includes(locationFilter)
       );
     }
 
     // 별점 필터링
     if (ratingFilter !== null) {
-      filtered = filtered.filter(review => 
-        review.rating >= ratingFilter
-      );
+      filtered = filtered.filter((review) => review.rating >= ratingFilter);
     }
 
     // 정렬
     switch (sortBy) {
-      case 'rating':
+      case "rating":
         filtered.sort((a, b) => b.rating - a.rating);
         break;
-      case 'oldest':
+      case "oldest":
         filtered.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
         break;
-      case 'latest':
+      case "latest":
       default:
         filtered.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         break;
@@ -111,22 +109,18 @@ function ReviewsList({
     return {
       ...reviewsData,
       content: filtered,
-      totalElements: filtered.length
+      totalElements: filtered.length,
     };
   }, [reviewsData, searchQuery, sortBy, locationFilter, ratingFilter]);
 
   if (loading) {
     return (
       <div className="flex justify-center items-center py-20">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative"
-        >
+        <motion.div initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }} className="relative">
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-pink-100"></div>
           <div className="animate-spin rounded-full h-16 w-16 border-4 border-pink-500 border-t-transparent absolute top-0 left-0"></div>
         </motion.div>
-        <motion.span 
+        <motion.span
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
@@ -145,11 +139,7 @@ function ReviewsList({
   // 검색 결과가 없을 때
   if (filteredAndSortedReviews.content.length === 0) {
     return (
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center py-20"
-      >
+      <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center py-20">
         <div className="max-w-md mx-auto">
           <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <FaSearch className="text-4xl text-gray-400" />
@@ -174,7 +164,7 @@ interface ReviewsPageProps {
   searchParams?: { [key: string]: string | string[] | undefined };
 }
 
-export default function ReviewsPage({ searchParams }: ReviewsPageProps) {
+export default function ReviewsPage() {
   // URL 파라미터를 클라이언트에서 처리
   const [page, setPage] = useState(0);
   const [size, setSize] = useState(10);
@@ -188,13 +178,13 @@ export default function ReviewsPage({ searchParams }: ReviewsPageProps) {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
+    if (typeof window !== "undefined") {
       const urlParams = new URLSearchParams(window.location.search);
-      const pageParam = urlParams.get('page');
-      const sizeParam = urlParams.get('size');
-      
-      setPage(parseInt(pageParam || '0'));
-      setSize(parseInt(sizeParam || '10'));
+      const pageParam = urlParams.get("page");
+      const sizeParam = urlParams.get("size");
+
+      setPage(parseInt(pageParam || "0"));
+      setSize(parseInt(sizeParam || "10"));
     }
   }, []);
 
@@ -230,26 +220,28 @@ export default function ReviewsPage({ searchParams }: ReviewsPageProps) {
               className={`
                 group relative flex items-center justify-between px-3 py-3 rounded-2xl
                 transition-all duration-300 focus:outline-none focus:ring-0 border-none
-                ${locationFilter === location 
-                  ? 'bg-gradient-to-r from-pink-500 to-rose-500 shadow-lg' 
-                  : 'bg-gray-50 hover:bg-gray-100'
+                ${
+                  locationFilter === location
+                    ? "bg-gradient-to-r from-pink-500 to-rose-500 shadow-lg"
+                    : "bg-gray-50 hover:bg-gray-100"
                 }
               `}
             >
-              <div className={`
+              <div
+                className={`
                 transition-all duration-300 mr-3
-                ${locationFilter === location ? 'scale-110' : 'group-hover:scale-110'}
-              `}>
+                ${locationFilter === location ? "scale-110" : "group-hover:scale-110"}
+              `}
+              >
                 <LocationIcon location={location} />
               </div>
-              
-              <span className={`
+
+              <span
+                className={`
                 text-sm font-medium transition-all duration-300
-                ${locationFilter === location 
-                  ? 'text-white' 
-                  : 'text-gray-700 group-hover:text-gray-900'
-                }
-              `}>
+                ${locationFilter === location ? "text-white" : "text-gray-700 group-hover:text-gray-900"}
+              `}
+              >
                 {location}
               </span>
             </motion.button>
@@ -271,18 +263,18 @@ export default function ReviewsPage({ searchParams }: ReviewsPageProps) {
                 >
                   TripReviews
                 </motion.div>
-          </Link>
+              </Link>
 
               {/* 데스크톱 검색바 */}
               <div className="hidden lg:flex flex-1 max-w-2xl mx-8">
-                <motion.div 
-                  className={`relative w-full transition-all duration-300 ${
-                    isSearchFocused ? 'scale-105' : ''
-                  }`}
+                <motion.div
+                  className={`relative w-full transition-all duration-300 ${isSearchFocused ? "scale-105" : ""}`}
                 >
-                  <FaSearch className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${
-                    isSearchFocused ? 'text-pink-500' : 'text-gray-400'
-                  }`} />
+                  <FaSearch
+                    className={`absolute left-4 top-1/2 transform -translate-y-1/2 transition-colors duration-300 ${
+                      isSearchFocused ? "text-pink-500" : "text-gray-400"
+                    }`}
+                  />
                   <input
                     type="text"
                     placeholder="여행지, 제목으로 리뷰 검색..."
@@ -318,8 +310,8 @@ export default function ReviewsPage({ searchParams }: ReviewsPageProps) {
                     </span>
                   )}
                 </motion.button>
-          <CreateReviewButton />
-        </div>
+                <CreateReviewButton />
+              </div>
             </div>
 
             {/* 모바일 검색바 */}
@@ -372,9 +364,9 @@ export default function ReviewsPage({ searchParams }: ReviewsPageProps) {
                     <h3 className="text-lg font-semibold text-gray-900 mb-4">정렬</h3>
                     <div className="grid grid-cols-2 gap-3">
                       {[
-                        { value: 'latest', label: '최신순' },
-                        { value: 'oldest', label: '오래된순' },
-                        { value: 'rating', label: '별점순' }
+                        { value: "latest", label: "최신순" },
+                        { value: "oldest", label: "오래된순" },
+                        { value: "rating", label: "별점순" },
                       ].map((option) => (
                         <motion.button
                           key={option.value}
@@ -382,9 +374,7 @@ export default function ReviewsPage({ searchParams }: ReviewsPageProps) {
                           whileTap={{ scale: 0.98 }}
                           onClick={() => setSortBy(option.value)}
                           className={`px-4 py-3 rounded-xl transition-all duration-200 focus:outline-none focus:ring-0 border-none ${
-                            sortBy === option.value
-                              ? 'bg-pink-50 text-pink-600'
-                              : 'bg-gray-50 hover:bg-gray-100'
+                            sortBy === option.value ? "bg-pink-50 text-pink-600" : "bg-gray-50 hover:bg-gray-100"
                           }`}
                         >
                           {option.label}
@@ -399,23 +389,20 @@ export default function ReviewsPage({ searchParams }: ReviewsPageProps) {
                     <div className="space-y-3">
                       {[5, 4, 3, null].map((rating) => (
                         <motion.button
-                          key={rating || 'all'}
+                          key={rating || "all"}
                           whileHover={{ scale: 1.02 }}
                           whileTap={{ scale: 0.98 }}
                           onClick={() => setRatingFilter(rating)}
                           className={`w-full px-4 py-3 rounded-xl transition-all duration-200 flex items-center justify-between focus:outline-none focus:ring-0 border-none ${
-                            ratingFilter === rating
-                              ? 'bg-pink-50 text-pink-600'
-                              : 'bg-gray-50 hover:bg-gray-100'
+                            ratingFilter === rating ? "bg-pink-50 text-pink-600" : "bg-gray-50 hover:bg-gray-100"
                           }`}
                         >
-                          <span>
-                            {rating ? `${rating}점 이상` : '모든 별점'}
-                          </span>
+                          <span>{rating ? `${rating}점 이상` : "모든 별점"}</span>
                           <div className="flex items-center">
-                            {rating && Array.from({ length: rating }).map((_, i) => (
-                              <FaStar key={i} className="text-yellow-500 text-sm" />
-                            ))}
+                            {rating &&
+                              Array.from({ length: rating }).map((_, i) => (
+                                <FaStar key={i} className="text-yellow-500 text-sm" />
+                              ))}
                           </div>
                         </motion.button>
                       ))}
@@ -471,7 +458,7 @@ export default function ReviewsPage({ searchParams }: ReviewsPageProps) {
                       animate={{ opacity: 1, scale: 1 }}
                       className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-pink-100 text-pink-700 border-none"
                     >
-                      정렬: {sortBy === 'rating' ? '별점순' : '오래된순'}
+                      정렬: {sortBy === "rating" ? "별점순" : "오래된순"}
                       <button
                         onClick={() => setSortBy("latest")}
                         className="ml-2 text-pink-500 hover:text-pink-700 focus:outline-none border-none bg-transparent"
@@ -525,23 +512,17 @@ export default function ReviewsPage({ searchParams }: ReviewsPageProps) {
         {/* 메인 콘텐츠 */}
         <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
           {/* 페이지 타이틀 */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="text-center mb-12"
-          >
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="text-center mb-12">
             <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">
-              {locationFilter === '전체' ? '여행 리뷰' : `${locationFilter} 여행 리뷰`}
+              {locationFilter === "전체" ? "여행 리뷰" : `${locationFilter} 여행 리뷰`}
             </h1>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              실제 여행자들의 생생한 경험을 만나보세요
-            </p>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">실제 여행자들의 생생한 경험을 만나보세요</p>
           </motion.div>
 
           {/* 리뷰 목록 */}
-          <ReviewsList 
-            page={page} 
-            size={size} 
+          <ReviewsList
+            page={page}
+            size={size}
             searchQuery={searchQuery}
             sortBy={sortBy}
             locationFilter={locationFilter}

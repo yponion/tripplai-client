@@ -9,10 +9,10 @@ if (!SERVER_BASE_URL) {
 // GET 요청 처리 - 특정 리뷰 상세 조회
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json(
@@ -78,7 +78,7 @@ export async function PUT(
 ) {
   try {
     const { id } = await params;
-    
+
     if (!id) {
       return NextResponse.json(
         { error: '리뷰 ID가 필요합니다.' },
@@ -88,7 +88,7 @@ export async function PUT(
 
     // 헤더에서 Authorization 토큰 가져오기
     const authorization = request.headers.get('authorization');
-    
+
     if (!authorization) {
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
@@ -98,7 +98,7 @@ export async function PUT(
 
     // FormData 그대로 서버로 전달
     const formData = await request.formData();
-    
+
     const serverUrl = `${SERVER_BASE_URL}/api/receiptReview/reviews/${id}`;
     console.log(`리뷰 수정 서버 API 호출: ${serverUrl}`);
 
@@ -113,7 +113,7 @@ export async function PUT(
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`서버 API 오류: ${response.status} ${response.statusText}`, errorText);
-      
+
       // 401 오류인 경우 로그인 필요 메시지 반환
       if (response.status === 401) {
         return NextResponse.json(
@@ -121,7 +121,7 @@ export async function PUT(
           { status: 401 }
         );
       }
-      
+
       // 403 오류인 경우 권한 없음 메시지 반환
       if (response.status === 403) {
         return NextResponse.json(
@@ -129,7 +129,7 @@ export async function PUT(
           { status: 403 }
         );
       }
-      
+
       return NextResponse.json(
         { error: '서버에서 리뷰 수정 중 오류가 발생했습니다.' },
         { status: response.status }
@@ -153,7 +153,7 @@ export async function DELETE(
 ) {
   try {
     const { id } = await params;
-    
+
     if (!id) {
       return NextResponse.json(
         { error: '리뷰 ID가 필요합니다.' },
@@ -163,14 +163,14 @@ export async function DELETE(
 
     // 헤더에서 Authorization 토큰 가져오기
     const authorization = request.headers.get('authorization');
-    
+
     if (!authorization) {
       return NextResponse.json(
         { error: '로그인이 필요합니다.' },
         { status: 401 }
       );
     }
-    
+
     const serverUrl = `${SERVER_BASE_URL}/api/receiptReview/reviews/${id}`;
     console.log(`리뷰 삭제 서버 API 호출: ${serverUrl}`);
 
@@ -185,7 +185,7 @@ export async function DELETE(
     if (!response.ok) {
       const errorText = await response.text();
       console.error(`서버 API 오류: ${response.status} ${response.statusText}`, errorText);
-      
+
       // 401 오류인 경우 로그인 필요 메시지 반환
       if (response.status === 401) {
         return NextResponse.json(
@@ -193,7 +193,7 @@ export async function DELETE(
           { status: 401 }
         );
       }
-      
+
       // 403 오류인 경우 권한 없음 메시지 반환
       if (response.status === 403) {
         return NextResponse.json(
@@ -201,7 +201,7 @@ export async function DELETE(
           { status: 403 }
         );
       }
-      
+
       return NextResponse.json(
         { error: '서버에서 리뷰 삭제 중 오류가 발생했습니다.' },
         { status: response.status }

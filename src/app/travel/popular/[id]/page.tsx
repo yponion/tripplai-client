@@ -58,6 +58,7 @@ import Footer from "@/components/common/Footer";
 import Link from "next/link";
 import NextImage from "next/image";
 import { getBestTravelSeason, getShortTermForecast, SeasonalInfo, WeatherData } from '@/services/weatherService';
+import { courseApi } from '@/services/courseService';
 
 // API 응답 타입 정의
 interface CourseDetail {
@@ -130,10 +131,11 @@ export default function TravelCourseDetail() {
         setIsLoading(true);
         
         // API 호출 상태 확인을 위한 로깅 추가
-        console.log(`코스 데이터 요청 시작: http://localhost:8080/api/course/${courseId}`);
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://3.34.52.239:8080';
+        console.log(`코스 데이터 요청 시작: ${baseUrl}/api/course/${courseId}`);
         
         // 백엔드 서버로 직접 API 호출
-        const response = await fetch(`http://localhost:8080/api/course/${courseId}`, {
+        const response = await fetch(`${baseUrl}/api/course/${courseId}`, {
           mode: "cors",
           headers: {
             'Accept': 'application/json'
@@ -196,6 +198,22 @@ export default function TravelCourseDetail() {
     if (courseId) {
       fetchCourseDetail();
     }
+  }, [courseId]);
+
+  // 초기 찜 상태 조회
+  useEffect(() => {
+    const init = async () => {
+      try {
+        if (!courseId) return;
+        const token = typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null;
+        if (!token) return;
+        const liked = await courseApi.isLiked(courseId);
+        setIsLiked(liked);
+      } catch (e) {
+        // 무시 (비로그인/네트워크 등)
+      }
+    };
+    init();
   }, [courseId]);
 
   // 날씨 데이터 및 추천 시기 로드
@@ -380,8 +398,22 @@ export default function TravelCourseDetail() {
     setHoverStyles("");
   };
 
-  const handleLikeToggle = () => {
-    setIsLiked(!isLiked);
+  const handleLikeToggle = async () => {
+    if (typeof window !== 'undefined' && !sessionStorage.getItem('accessToken')) {
+      alert('로그인이 필요합니다.');
+      return;
+    }
+    try {
+      if (isLiked) {
+        await courseApi.unlikeCourse(courseId);
+        setIsLiked(false);
+      } else {
+        await courseApi.courseLike(String(courseId));
+        setIsLiked(true);
+      }
+    } catch (e) {
+      alert('찜하기 처리 중 오류가 발생했습니다.');
+    }
   };
 
   const handleShareClick = () => {
@@ -858,6 +890,17 @@ export default function TravelCourseDetail() {
             >
               {courseDetail.title}
             </Heading>
+
+            {/* 찜하기 버튼 */}
+            <Flex justify="center" align="center" mt={2}>
+              <IconButton
+                aria-label={isLiked ? '찜 해제' : '찜하기'}
+                icon={<Icon as={isLiked ? FaHeart : FaRegHeart} color={isLiked ? 'pink.500' : 'gray.500'} />}
+                onClick={handleLikeToggle}
+                variant="ghost"
+                size="lg"
+              />
+            </Flex>
 
             <Flex justify="center" align="center" mb={4} wrap="wrap" gap={6}>
               <Flex align="center" bg="pink.50" px={4} py={2} borderRadius="full" boxShadow="sm">

@@ -9,11 +9,11 @@ if (!SERVER_BASE_URL) {
 // GET 요청 처리 - 특정 리뷰 상세 조회
 export async function GET(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: { id: string } }
 ) {
   try {
-    const { id } = await params;
-    
+    const { id } = params;
+
     if (!id) {
       return NextResponse.json(
         { error: '리뷰 ID가 필요합니다.' },
@@ -29,8 +29,8 @@ export async function GET(
       'Content-Type': 'application/json',
     };
 
-    // Authorization 헤더 추가 (쿠키에서 가져오기)
-    const authorization = request.headers.get('Authorization');
+    // Authorization 헤더 추가 (케이스 통일)
+    const authorization = request.headers.get('authorization');
     if (authorization) {
       headers['Authorization'] = authorization;
       console.log('✅ Authorization 헤더 전달');
@@ -47,40 +47,27 @@ export async function GET(
     console.log(`📋 응답 헤더 Content-Type: ${response.headers.get('content-type')}`);
 
     if (!response.ok) {
-      // 응답 내용을 텍스트로 확인
+      // 401 또는 404 오류인 경우 null 반환 (클라이언트에서 not-found 처리)
+      if (response.status === 401 || response.status === 404) {
+        return NextResponse.json(null, { status: 200 });
+      }
+
       const responseText = await response.text();
       console.error(`❌ 서버 API 오류: ${response.status} ${response.statusText}`);
       console.error(`❌ 응답 내용: ${responseText.substring(0, 200)}...`);
-      
-      // 401 또는 404 오류인 경우 null 반환 (임시 처리)
-      if (response.status === 401 || response.status === 404) {
-        return NextResponse.json(null);
-      }
-      
       return NextResponse.json(
         { error: '서버에서 리뷰를 가져오는 중 오류가 발생했습니다.' },
         { status: response.status }
       );
     }
 
-    // 응답 내용을 먼저 텍스트로 확인
-    const responseText = await response.text();
-    console.log(`✅ 서버 응답 내용 (처음 200자): ${responseText.substring(0, 200)}...`);
-    
-    try {
-      const data = JSON.parse(responseText);
-      console.log(`✅ JSON 파싱 성공`);
-      return NextResponse.json(data);
-    } catch (parseError) {
-      console.error(`❌ JSON 파싱 실패:`, parseError);
-      console.error(`❌ 파싱 실패한 응답: ${responseText.substring(0, 500)}...`);
-      return NextResponse.json(null);
-    }
+    // 안전하게 JSON으로 바로 파싱
+    const data = await response.json();
+    return NextResponse.json(data, { status: 200 });
   } catch (error) {
     console.error('💥 리뷰 상세 API 프록시 오류:', error);
-    
-    // 오류 발생 시 null 반환 (임시 처리)
-    return NextResponse.json(null);
+    // 오류 발생 시에도 null 반환하여 클라이언트에서 처리
+    return NextResponse.json(null, { status: 200 });
   }
 }
 

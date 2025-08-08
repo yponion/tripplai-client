@@ -69,23 +69,10 @@ export async function getReviews({
     const url = `${baseUrl}/api/reviews?page=${page}&size=${size}`;
     console.log(`API 호출 URL: ${url}`);
 
-    // 토큰이 있으면 헤더에 추가 (브라우저에서만)
+    // 공개 엔드포인트: Authorization 헤더 없이 요청
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     };
-    
-    // 서버 사이드에서는 sessionStorage 접근 불가하므로 체크
-    if (typeof window !== 'undefined') {
-      const token = sessionStorage.getItem('accessToken');
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-        console.log('리뷰 목록 요청 - 토큰 포함:', token.substring(0, 20) + '...');
-      } else {
-        console.log('리뷰 목록 요청 - 토큰 없음');
-      }
-    } else {
-      console.log('서버 사이드 렌더링 - 토큰 없이 요청');
-    }
 
     const response = await fetch(url, {
       signal: controller.signal,
@@ -122,23 +109,10 @@ export async function getReviewById(id: number): Promise<Review | null> {
     const url = `${baseUrl}/api/reviews/${id}`;
     console.log(`API 호출 URL: ${url}`);
 
-    // 토큰이 있으면 헤더에 추가 (브라우저에서만)
+    // 공개 엔드포인트: Authorization 헤더 없이 요청
     const headers: HeadersInit = {
       'Content-Type': 'application/json',
     };
-    
-    // 서버 사이드에서는 sessionStorage 접근 불가하므로 체크
-    if (typeof window !== 'undefined') {
-      const token = sessionStorage.getItem('accessToken');
-      if (token) {
-        headers['Authorization'] = `Bearer ${token}`;
-        console.log('리뷰 상세 요청 - 토큰 포함:', token.substring(0, 20) + '...');
-      } else {
-        console.log('리뷰 상세 요청 - 토큰 없음');
-      }
-    } else {
-      console.log('서버 사이드 렌더링 - 토큰 없이 요청');
-    }
 
     const response = await fetch(url, {
       signal: controller.signal,

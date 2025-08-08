@@ -20,6 +20,7 @@ import { BsArrowUpRight } from "react-icons/bs";
 import NavSection from "@/components/common/NavSection";
 import Footer from "@/components/common/Footer";
 import useThemeMode from "@/hooks/useDarkMode";
+import { courseApi } from "@/services/courseService";
 
 // 정확히 표시할 코스 개수
 const COURSE_COUNT = 16;
@@ -35,48 +36,12 @@ interface Course {
   rating?: number;
 }
 
-// 이미지 크기 확인 함수
-function isImageLargeEnough(url: string) {
-  return new Promise<boolean>((resolve) => {
-    // HTMLImageElement 사용으로 타입 문제 해결
-    const img = document.createElement("img");
-    img.onload = () => {
-      if (img.width >= 300 && img.height >= 300) {
-        resolve(true);
-      } else {
-        resolve(false);
-      }
-    };
-    img.onerror = () => resolve(false);
-    img.src = url;
-  });
-}
-
-// 유효한 이미지를 가진 코스만 필터링하는 함수
-async function filterValidImages(courses: Course[]) {
-  const filtered = [];
-  const imageUrls = new Set(); // 이미지 URL 중복 체크를 위한 Set
-
-  for (const course of courses) {
-    // 이미지 URL이 이미 사용되었는지 확인
-    if (imageUrls.has(course.thumbnailUrl)) {
-      console.log(`중복 이미지 발견: ${course.thumbnailUrl}, 코스 제외: ${course.title}`);
-      continue;
-    }
-
-    const valid = await isImageLargeEnough(course.thumbnailUrl);
-    if (valid) {
-      filtered.push(course);
-      imageUrls.add(course.thumbnailUrl); // 사용된 이미지 URL 추가
-    }
-  }
-
-  return filtered;
-}
+// 성능 최적화를 위해 이미지 선검증을 제거하고, 렌더 단계에서 fallback 이미지를 사용합니다.
 
 // API에서 코스 데이터를 가져오는 함수
 async function fetchCourseData(page = 0, limit = 50) {
-  const response = await fetch(`http://localhost:8080/api/course?page=${page}&limit=${limit}`, {
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://3.34.52.239:8080';
+  const response = await fetch(`${baseUrl}/api/course?page=${page}&limit=${limit}`, {
     mode: "cors",
     cache: "no-store",
   });
@@ -89,64 +54,10 @@ async function fetchCourseData(page = 0, limit = 50) {
   return Array.isArray(data) ? data : [];
 }
 
-// 필요한 갯수만큼 유효한 코스를 가져오는 함수
-async function fetchValidCoursesUntilThreshold(threshold = COURSE_COUNT, maxAttempts = 30) {
-  let validCourses: Course[] = [];
-  let page = 0;
-  let attempts = 0;
-
-  // 유효한 코스가 threshold에 도달하거나 최대 시도 횟수에 도달할 때까지 반복
-  while (validCourses.length < threshold && attempts < maxAttempts) {
-    console.log(`시도 ${attempts + 1}: 현재 유효한 코스 ${validCourses.length}개, 목표 ${threshold}개`);
-
-    const newCourses = await fetchCourseData(page, 50);
-
-    if (newCourses.length === 0) {
-      console.log("더 이상 가져올 데이터가 없습니다.");
-      if (validCourses.length < threshold) {
-        console.log(`충분한 코스를 찾지 못했습니다. 현재 ${validCourses.length}개, 목표 ${threshold}개`);
-        // 더 많은 시도를 위해 페이지를 초기화하고 다시 시작
-        page = 0;
-      }
-      attempts++;
-      continue;
-    }
-
-    // 새로 가져온 코스에서 유효한 이미지만 필터링 (중복 제거)
-    const newValidCourses = await filterValidImages(newCourses);
-    console.log(`페이지 ${page}에서 ${newCourses.length}개 중 ${newValidCourses.length}개의 유효한 코스 발견`);
-
-    // 누적된 유효한 코스에 추가 (중복 체크)
-    for (const course of newValidCourses) {
-      // 이미 같은 코스 ID가 있는지 확인
-      if (!validCourses.some((c) => c.courseId === course.courseId)) {
-        validCourses.push(course);
-        if (validCourses.length >= threshold) {
-          break; // 목표 개수 달성
-        }
-      }
-    }
-    console.log(`누적된 유효한 코스: ${validCourses.length}개`);
-
-    page++;
-    attempts++;
-
-    // 페이지가 너무 많이 증가하면 다시 처음부터 시작
-    if (page > 10) {
-      page = 0;
-    }
-  }
-
-  if (validCourses.length < threshold) {
-    console.warn(
-      `최대 시도 횟수(${maxAttempts})에 도달했지만 ${threshold}개를 채우지 못했습니다. 현재 ${validCourses.length}개`
-    );
-  }
-
-  // 정확히 threshold 개수만큼만 반환
-  const result = validCourses.slice(0, threshold);
-  console.log(`최종 반환되는 유효한 코스: ${result.length}개`);
-  return result;
+// 단순히 첫 페이지에서 받아온 데이터 중 상위 N개만 사용합니다.
+async function fetchFirstPageCourses(threshold = COURSE_COUNT) {
+  const firstPage = await fetchCourseData(0, 50);
+  return firstPage.slice(0, threshold);
 }
 
 export default function PopularCoursesPage() {
@@ -172,16 +83,12 @@ export default function PopularCoursesPage() {
   const locationColor = themeMode === "original" ? "pink.500" : themeMode === "dark" ? "cyan.400" : "blue.600";
   const buttonHoverBg = themeMode === "original" ? "pink.600" : themeMode === "dark" ? "cyan.400" : "blue.600";
 
-  // 코스 데이터 가져오기
+  // 코스 데이터 가져오기 (간소화: 1회 요청)
   useEffect(() => {
     const loadCourses = async () => {
       try {
-        console.log("코스 로딩 시작...");
-        const validCourses = await fetchValidCoursesUntilThreshold(COURSE_COUNT);
-
-        // 정확히 16개만 설정
-        setCourses(validCourses.slice(0, COURSE_COUNT));
-        console.log(`최종 설정된 코스 수: ${validCourses.slice(0, COURSE_COUNT).length}`);
+        const list = await fetchFirstPageCourses(COURSE_COUNT);
+        setCourses(list);
 
         setIsLoading(false);
       } catch (err) {
@@ -194,51 +101,61 @@ export default function PopularCoursesPage() {
     loadCourses();
   }, []);
 
-  // 찜 목록 불러오기
+  // 찜 목록 불러오기 (로그인 시 서버, 비로그인 시 로컬)
   useEffect(() => {
-    const savedLikes = localStorage.getItem("likedCourses");
-    if (savedLikes) {
-      setLikedCourses(JSON.parse(savedLikes));
-    }
+    const initLikes = async () => {
+      const token = typeof window !== "undefined" ? sessionStorage.getItem("accessToken") : null;
+      if (token) {
+        try {
+          const liked = await courseApi.getLikedCourses();
+          setLikedCourses(liked.map((c) => c.courseId));
+          return;
+        } catch (e) {
+          // 서버 실패 시 로컬로 폴백
+        }
+      }
+      const savedLikes = typeof window !== "undefined" ? localStorage.getItem("likedCourses") : null;
+      if (savedLikes) setLikedCourses(JSON.parse(savedLikes));
+    };
+    initLikes();
   }, []);
 
-  // 찜하기 토글
-  const toggleLike = (courseId: number, e: React.MouseEvent) => {
+  // 찜하기 토글 (로그인 시 서버, 비로그인 시 로컬)
+  const toggleLike = async (courseId: number, e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
 
-    // if (!session) {
-    //   toast({
-    //     title: "로그인이 필요합니다",
-    //     description: "찜하기는 로그인 후 이용할 수 있습니다",
-    //     status: "warning",
-    //     duration: 3000,
-    //     isClosable: true,
-    //   });
-    //   return;
-    // }
+    const token = typeof window !== "undefined" ? sessionStorage.getItem("accessToken") : null;
+    if (token) {
+      try {
+        if (likedCourses.includes(courseId)) {
+          await courseApi.unlikeCourse(courseId);
+          setLikedCourses((prev) => prev.filter((id) => id !== courseId));
+          toast({ title: "찜 목록에서 제거되었습니다", status: "info", duration: 1500, isClosable: true });
+        } else {
+          await courseApi.courseLike(String(courseId));
+          setLikedCourses((prev) => [...prev, courseId]);
+          toast({ title: "찜 목록에 추가되었습니다", status: "success", duration: 1500, isClosable: true });
+        }
+      } catch (err) {
+        toast({ title: "찜하기 처리 중 오류가 발생했습니다", status: "error", duration: 2000, isClosable: true });
+      }
+      return;
+    }
 
+    // 비로그인: 로컬 스토리지로만 관리
     let newLikedCourses;
     if (likedCourses.includes(courseId)) {
       newLikedCourses = likedCourses.filter((id) => id !== courseId);
-      toast({
-        title: "찜 목록에서 제거되었습니다",
-        status: "info",
-        duration: 2000,
-        isClosable: true,
-      });
+      toast({ title: "찜 목록에서 제거되었습니다", status: "info", duration: 1500, isClosable: true });
     } else {
       newLikedCourses = [...likedCourses, courseId];
-      toast({
-        title: "찜 목록에 추가되었습니다",
-        status: "success",
-        duration: 2000,
-        isClosable: true,
-      });
+      toast({ title: "찜 목록에 추가되었습니다", status: "success", duration: 1500, isClosable: true });
     }
-
     setLikedCourses(newLikedCourses);
-    localStorage.setItem("likedCourses", JSON.stringify(newLikedCourses));
+    if (typeof window !== "undefined") {
+      localStorage.setItem("likedCourses", JSON.stringify(newLikedCourses));
+    }
   };
 
   useEffect(() => {
@@ -410,7 +327,14 @@ export default function PopularCoursesPage() {
               >
                 {/* 이미지 영역 - 비율 조정 */}
                 <Box position="relative" height="52%" overflow="hidden">
-                  <Image src={course.thumbnailUrl} alt={course.title} objectFit="cover" width="100%" height="100%" />
+                  <Image
+                    src={course.thumbnailUrl}
+                    alt={course.title}
+                    objectFit="cover"
+                    width="100%"
+                    height="100%"
+                    fallbackSrc="/images/popular/map_pin.png"
+                  />
                   {/* 지역 뱃지 - 이미지 위에 배치 */}
                   <Box
                     position="absolute"

@@ -105,13 +105,13 @@ export const authApi = {
   login: async (email: string, password: string) => {
     try {
       console.log("🌐 로그인 API 호출 (직접 서버):", { email, password });
-      
+
       // 직접 서버로 호출
       const res = await api.post('/auth/login', {
         email,
         password,
       });
-      
+
       console.log("📨 서버 응답:", res.data);
       return res.data;
     } catch (error: any) {
@@ -119,7 +119,7 @@ export const authApi = {
       console.error("❌ 에러 상태:", error.response?.status);
       console.error("❌ 에러 응답:", error.response?.data);
       console.error("❌ 네트워크 에러:", error.message);
-      
+
       // 서버에서 응답이 온 경우 (401, 400 등)
       if (error.response && error.response.data) {
         return {
@@ -128,7 +128,7 @@ export const authApi = {
           accessToken: null
         };
       }
-      
+
       // 네트워크 에러인 경우
       return {
         code: "NETWORK_ERROR",
@@ -138,9 +138,10 @@ export const authApi = {
     }
   },
 
+  /** refresh token 삭제 */
   logout: async () => {
     try {
-      const res = await axios.post(`/api/auth/logout`)
+      const res = await axios.post(`${API_URL}/auth/initializeToken`, {}, { withCredentials: true })
       return res.data
     } catch (error) {
       console.log("로그아웃 API 호출 중 에러: ", error)

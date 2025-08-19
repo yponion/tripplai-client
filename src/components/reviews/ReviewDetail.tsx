@@ -48,11 +48,20 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
   const isOwner = currentUser === review.nickname;
 
   // 이미지 URL 처리
+  // 업로드 경로 폴백 제거: 서버는 파일명만 반환하며 정적 경로는 /image/{filename}로 통일
+
   const getImageUrl = (imageUrl: string) => {
     if (!imageUrl) return '';
     if (imageUrl.startsWith('http')) return imageUrl;
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || '';
-    return `${apiUrl}${imageUrl}`;
+    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://3.34.52.239:8080').replace(/\/$/, '');
+    if (imageUrl.startsWith('/')) {
+      const finalUrl = `${apiUrl}${imageUrl}`;
+      if (process.env.NODE_ENV !== 'production') console.log('[ReviewDetail] imageUrl(mapped):', finalUrl);
+      return finalUrl;
+    }
+    const finalUrl = `${apiUrl}/image/${imageUrl}`;
+    if (process.env.NODE_ENV !== 'production') console.log('[ReviewDetail] imageUrl(mapped):', finalUrl);
+    return finalUrl;
   };
 
   // 유효한 이미지 필터링
@@ -223,7 +232,7 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
                   alt={review.title}
                   fill
                   className="object-cover hover:brightness-95 transition-all"
-                  onError={() => handleImageError(getImageUrl(validImages[selectedImageIndex].imageUrl))}
+                  onError={() => { const key = validImages[selectedImageIndex].imageUrl; const u = getImageUrl(key); handleImageError(u); if (process.env.NODE_ENV !== 'production') console.error('[ReviewDetail] image onError:', u); }}
                   priority
                   unoptimized
                 />
@@ -253,7 +262,7 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
                         alt={`${review.title} ${index + 2}`}
                         fill
                         className="object-cover hover:brightness-95 transition-all"
-                        onError={() => handleImageError(getImageUrl(image.imageUrl))}
+                        onError={() => { const key = image.imageUrl; const u = getImageUrl(key); handleImageError(u); if (process.env.NODE_ENV !== 'production') console.error('[ReviewDetail] thumb onError:', u); }}
                         unoptimized
                       />
                       {index === 3 && validImages.length > 5 && (

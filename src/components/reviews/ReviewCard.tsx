@@ -23,13 +23,20 @@ export default function ReviewCard({ review }: ReviewCardProps) {
     if (imageUrl.startsWith('http')) {
       return imageUrl; // 이미 절대 URL인 경우
     }
-    // 환경변수가 없으면 빈 문자열 반환 (개발 환경에서 경고)
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://3.34.52.239:8080').replace(/\/$/, '');
     if (!apiUrl) {
       console.warn('NEXT_PUBLIC_API_URL이 설정되지 않았습니다.');
       return imageUrl;
     }
-    return `${apiUrl}${imageUrl}`;
+    // 서버는 파일명만 반환하므로 /image/{파일명}으로 보정
+    if (imageUrl.startsWith('/')) {
+      const finalUrl = `${apiUrl}${imageUrl}`;
+      if (process.env.NODE_ENV !== 'production') console.log('[ReviewCard] imageUrl(mapped):', finalUrl);
+      return finalUrl;
+    }
+    const finalUrl = `${apiUrl}/image/${imageUrl}`;
+    if (process.env.NODE_ENV !== 'production') console.log('[ReviewCard] imageUrl(mapped):', finalUrl);
+    return finalUrl;
   };
 
   const renderStarRating = (rating: number) => {
@@ -75,10 +82,13 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                     className={`object-cover transition-all duration-700 group-hover:scale-110 ${
                       imageLoading ? 'opacity-0' : 'opacity-100'
                     }`}
-                    onError={() => setImgError(true)}
+                    onError={(e) => {
+                      setImgError(true);
+                      if (process.env.NODE_ENV !== 'production') console.error('[ReviewCard] image onError:', (e as any)?.currentTarget?.src);
+                    }}
                     onLoad={() => setImageLoading(false)}
                     priority
-                    unoptimized={true}
+                    unoptimized
                   />
                 ) : (
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-50 to-rose-100">

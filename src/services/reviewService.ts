@@ -192,8 +192,9 @@ export async function createReview(
 
     const formData = new FormData();
     
-    // 리뷰 데이터를 JSON으로 추가
-    formData.append('review', JSON.stringify(reviewData));
+    // 리뷰 데이터를 JSON으로 추가 (Blob으로 감싸 Content-Type 지정)
+    const reviewBlob = new Blob([JSON.stringify(reviewData)], { type: 'application/json' });
+    formData.append('review', reviewBlob);
     console.log('리뷰 데이터:', reviewData);
     
     // 이미지 파일들 추가
@@ -256,8 +257,9 @@ export async function updateReview(
 
     const formData = new FormData();
     
-    // 리뷰 데이터를 JSON으로 추가
-    formData.append('review', JSON.stringify(reviewData));
+    // 리뷰 데이터를 JSON으로 추가 (Blob으로 감싸 Content-Type 지정)
+    const reviewBlob = new Blob([JSON.stringify(reviewData)], { type: 'application/json' });
+    formData.append('review', reviewBlob);
     
     // 이미지 파일들 추가
     if (images && images.length > 0) {

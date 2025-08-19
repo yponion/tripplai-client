@@ -124,7 +124,7 @@ export default function ReviewPage() {
                       {otherReview.images && otherReview.images.length > 0 ? (
                         <div className="relative aspect-[4/3] overflow-hidden">
                           <img
-                            src={`${process.env.NEXT_PUBLIC_API_URL || ''}${otherReview.images[0].imageUrl}`}
+                            src={`${(process.env.NEXT_PUBLIC_API_URL || 'http://3.34.52.239:8080').replace(/\/$/, '')}${otherReview.images[0].imageUrl.startsWith('http') ? '' : (otherReview.images[0].imageUrl.startsWith('/') ? '' : '/image/')}${otherReview.images[0].imageUrl}`}
                             alt={otherReview.title}
                             className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
                           />

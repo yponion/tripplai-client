@@ -8,7 +8,6 @@ export interface BaseParams {
 }
 
 export interface AreaBasedListParams extends BaseParams {
-  listYN?: "Y" | "N"; // 목록구분(Y=목록, N=개수)
   arrange?: "A" | "C" | "D" | "O" | "Q" | "R"; // 정렬구분 (A=제목순, C=수정일순, D=생성일순) 대표이미지가반드시있는정렬(O=제목순, Q=수정일순, R=생성일순)
   contentTypeId?: string; // 관광타입(12:관광지, 14:문화시설, 15:축제공연행사, 25:여행코스, 28:레포츠, 32:숙박, 38:쇼핑, 39:음식점) ID
   areaCode?: string // 지역코드(지역코드조회 참고)

@@ -12,17 +12,12 @@ export default function FestivalList() {
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  const { data, isLoading, error } = useQuery<FestivalResponse>({
+  const { data, isLoading } = useQuery<FestivalResponse>({
     queryKey: ["festivals"],
     queryFn: getFestivals,
   });
 
-  if (isLoading) return <div>로딩 중...</div>;
-  if (error) return <div>에러 발생</div>;
-
-  const items = data?.response.body.items.item.filter(
-    (festival) => festival.eventenddate > getDate()
-  );
+  const items = data?.response.body.items.item.filter((festival) => festival.eventenddate > getDate());
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
@@ -57,16 +52,13 @@ export default function FestivalList() {
 
   const filteredItems = submittedQuery
     ? items?.filter((festival) =>
-        [festival.title, festival.addr1]
-          .join(" ")
-          .toLowerCase()
-          .includes(submittedQuery.toLowerCase())
+        [festival.title, festival.addr1].join(" ").toLowerCase().includes(submittedQuery.toLowerCase())
       )
     : items;
 
-  const sortedItems = filteredItems?.sort(
-    (a, b) => Number(a.eventstartdate) - Number(b.eventstartdate)
-  );
+  const sortedItems = filteredItems?.sort((a, b) => Number(a.eventstartdate) - Number(b.eventstartdate));
+
+  if (isLoading) return <div>로딩 중...</div>;
 
   return (
     <div className="px-5 py-4 flex flex-col items-center">
@@ -96,11 +88,7 @@ export default function FestivalList() {
       </div>
 
       {/* 검색어 결과 타이틀 */}
-      {submittedQuery && (
-        <h2 className="text-lg font-semibold mb-4 text-purple-700">
-          “{submittedQuery}” 검색 결과
-        </h2>
-      )}
+      {submittedQuery && <h2 className="text-lg font-semibold mb-4 text-purple-700">“{submittedQuery}” 검색 결과</h2>}
 
       {/* 축제 리스트 */}
       <ul className="list-none w-full max-w-screen-2xl p-0 transition-all grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
@@ -110,9 +98,7 @@ export default function FestivalList() {
           </li>
         ))}
         {sortedItems?.length === 0 && (
-          <li className="col-span-full text-center text-gray-500 mt-4">
-            검색 결과가 없습니다.
-          </li>
+          <li className="col-span-full text-center text-gray-500 mt-4">검색 결과가 없습니다.</li>
         )}
       </ul>
     </div>

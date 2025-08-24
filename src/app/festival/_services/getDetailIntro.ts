@@ -1,7 +1,7 @@
 import { DetailIntroParams } from "@/types/festival";
 
 export default async function getDetailIntro(id: string) {
-  const url = new URL(process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/detailIntro1");
+  const url = new URL(process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/detailIntro2");
 
   const params: DetailIntroParams = {
     contentId: id,

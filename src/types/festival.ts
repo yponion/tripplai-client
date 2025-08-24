@@ -8,7 +8,6 @@ export interface BaseParams {
 }
 
 export interface GetFestivalsParams extends BaseParams {
-  listYN?: "Y" | "N"; // 목록구분(Y=목록, N=개수)
   arrange?: "A" | "C" | "D" | "O" | "Q" | "R"; // 정렬구분 (A=제목순, C=수정일순, D=생성일순) 대표이미지가반드시있는정렬(O=제목순, Q=수정일순, R=생성일순)
   eventStartDate: string; // 행사시작일(형식 :YYYYMMDD)
   eventEndDate?: string; // 행사종료일(형식 :YYYYMMDD)

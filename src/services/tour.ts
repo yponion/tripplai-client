@@ -2,7 +2,7 @@ import { AreaBasedListParams, AreaCodeParams } from "@/types/tourInfo";
 
 export const tour = {
   getAreaBasedList: async (customParams?: Partial<AreaBasedListParams>) => {
-    const url = new URL(process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/areaBasedList1");
+    const url = new URL(process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/areaBasedList2");
 
     // 기본 params
     const defaultParams: AreaBasedListParams = {
@@ -11,7 +11,6 @@ export const tour = {
       MobileOS: "ETC",
       MobileApp: process.env.NEXT_PUBLIC_SERVICE_NAME!,
       _type: "json",
-      listYN: "Y",
       serviceKey: process.env.NEXT_PUBLIC_TOUR_API_KEY!,
     };
 
@@ -38,7 +37,7 @@ export const tour = {
   },
 
   getAreaCode: async (customParams?: Partial<AreaCodeParams>) => {
-    const url = new URL(process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/areaCode1");
+    const url = new URL(process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/areaCode2");
 
     // 기본 params
     const defaultParams: AreaCodeParams = {

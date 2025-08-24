@@ -30,7 +30,6 @@ export default function RegionHighlights() {
 
       // 여행 코스 (contentTypeId: 25)
       const courseCountRes: CountResponse = await tour.getAreaBasedList({
-        listYN: "N",
         areaCode: areaCode[index].code,
         contentTypeId: "25",
         arrange: "O",
@@ -48,7 +47,6 @@ export default function RegionHighlights() {
 
       // 음식점/가성비 업소 (contentTypeId: 39)
       const foodCountRes: CountResponse = await tour.getAreaBasedList({
-        listYN: "N",
         areaCode: areaCode[index].code,
         contentTypeId: "39",
         arrange: "O",
@@ -66,7 +64,6 @@ export default function RegionHighlights() {
 
       // 지역 이벤트/행사 (contentTypeId: 15)
       const eventCountRes: CountResponse = await tour.getAreaBasedList({
-        listYN: "N",
         areaCode: areaCode[index].code,
         contentTypeId: "15",
         arrange: "O",

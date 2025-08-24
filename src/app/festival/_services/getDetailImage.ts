@@ -1,7 +1,7 @@
 import { DetailImageParam } from "@/types/festival";
 
 export default async function getDetailImage(id: string) {
-  const url = new URL(process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/detailImage1");
+  const url = new URL(process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/detailImage2");
 
   const params: DetailImageParam = {
     contentId: id,
@@ -9,7 +9,6 @@ export default async function getDetailImage(id: string) {
     MobileApp: process.env.NEXT_PUBLIC_SERVICE_NAME!,
     _type: "json",
     serviceKey: process.env.NEXT_PUBLIC_TOUR_API_KEY!,
-    subImageYN: "Y",
   }
 
   Object.entries(params).forEach(([key, value]) => {

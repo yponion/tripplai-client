@@ -2,7 +2,7 @@ import { GetFestivalsParams } from "@/types/festival";
 import { getLastYearDate } from "@/utils/dateUtils";
 
 export default async function getFestivals() {
-  const url = new URL(process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/searchFestival1");
+  const url = new URL(process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/searchFestival2");
 
   const params: GetFestivalsParams = {
     numOfRows: 2000,
@@ -10,7 +10,6 @@ export default async function getFestivals() {
     MobileOS: "ETC",
     MobileApp: process.env.NEXT_PUBLIC_SERVICE_NAME!,
     _type: "json",
-    listYN: "Y",
     eventStartDate: getLastYearDate(),
     serviceKey: process.env.NEXT_PUBLIC_TOUR_API_KEY!,
   }

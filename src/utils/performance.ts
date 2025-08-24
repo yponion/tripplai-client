@@ -22,16 +22,16 @@ export const endMeasure = (markName: string): number | null => {
   if (typeof window !== 'undefined' && window.performance) {
     const startMark = `start_${markName}`;
     const endMark = `end_${markName}`;
-    
+
     window.performance.mark(endMark);
-    
+
     try {
       window.performance.measure(markName, startMark, endMark);
     } catch (e) {
       console.warn(`성능 측정 에러 (${markName}):`, e);
       return null;
     }
-    
+
     const entries = window.performance.getEntriesByName(markName, 'measure');
     if (entries.length > 0) {
       const duration = entries[0].duration;
@@ -52,7 +52,7 @@ export const endMeasure = (markName: string): number | null => {
 export const useComponentPerformance = (componentName: string): void => {
   React.useEffect(() => {
     startMeasure(`render_${componentName}`);
-    
+
     return () => {
       endMeasure(`render_${componentName}`);
     };
@@ -65,18 +65,17 @@ export const useComponentPerformance = (componentName: string): void => {
  * @param componentName 컴포넌트 이름
  */
 export const withPerformanceTracking = <P extends object>(
-  Component: React.ComponentType<P>, 
+  Component: React.ComponentType<P>,
   componentName: string
 ): React.FC<P> => {
   const WrappedComponent = (props: P) => {
     useComponentPerformance(componentName);
     return React.createElement(Component, props);
   };
-  
+
   // displayName 설정
-  WrappedComponent.displayName = `WithPerformanceTracking(${
-    Component.displayName || Component.name || componentName || 'Component'
-  })`;
-  
+  WrappedComponent.displayName = `WithPerformanceTracking(${Component.displayName || Component.name || componentName || 'Component'
+    })`;
+
   return WrappedComponent;
 }; 

@@ -33,7 +33,6 @@ export default async function FestivalDetail({ id }: Props) {
   const items = detailInfoResponse?.response?.body?.items?.item ?? [];
   const infos = items.map((item) => ({ infoname: item?.infoname ?? "", infotext: item?.infotext ?? "" }));
   const images = detailImageResponse.response.body.items.item ?? [];
-  console.log(detailImageResponse);
 
   const setTitleContent = (title: string, content: string) => {
     if (!content) return null;

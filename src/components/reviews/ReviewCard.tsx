@@ -19,23 +19,21 @@ export default function ReviewCard({ review }: ReviewCardProps) {
 
   // 이미지 URL에 서버 주소 추가
   const getImageUrl = (imageUrl: string) => {
-    if (!imageUrl) return '';
-    if (imageUrl.startsWith('http')) {
+    if (!imageUrl) return "";
+    if (imageUrl.startsWith("http")) {
       return imageUrl; // 이미 절대 URL인 경우
     }
-    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://3.34.52.239:8080').replace(/\/$/, '');
+    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://3.34.52.239:8080").replace(/\/$/, "");
     if (!apiUrl) {
-      console.warn('NEXT_PUBLIC_API_URL이 설정되지 않았습니다.');
+      console.warn("NEXT_PUBLIC_API_URL이 설정되지 않았습니다.");
       return imageUrl;
     }
     // 서버는 파일명만 반환하므로 /image/{파일명}으로 보정
-    if (imageUrl.startsWith('/')) {
+    if (imageUrl.startsWith("/")) {
       const finalUrl = `${apiUrl}${imageUrl}`;
-      if (process.env.NODE_ENV !== 'production') console.log('[ReviewCard] imageUrl(mapped):', finalUrl);
       return finalUrl;
     }
     const finalUrl = `${apiUrl}/image/${imageUrl}`;
-    if (process.env.NODE_ENV !== 'production') console.log('[ReviewCard] imageUrl(mapped):', finalUrl);
     return finalUrl;
   };
 
@@ -45,9 +43,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
         {Array.from({ length: 5 }).map((_, index) => (
           <FaStar
             key={index}
-            className={`transition-colors ${
-              index < Math.floor(rating) ? "text-yellow-400" : "text-gray-200"
-            }`}
+            className={`transition-colors ${index < Math.floor(rating) ? "text-yellow-400" : "text-gray-200"}`}
             size={16}
           />
         ))}
@@ -80,11 +76,12 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                     alt={title}
                     fill
                     className={`object-cover transition-all duration-700 group-hover:scale-110 ${
-                      imageLoading ? 'opacity-0' : 'opacity-100'
+                      imageLoading ? "opacity-0" : "opacity-100"
                     }`}
                     onError={(e) => {
                       setImgError(true);
-                      if (process.env.NODE_ENV !== 'production') console.error('[ReviewCard] image onError:', (e as any)?.currentTarget?.src);
+                      if (process.env.NODE_ENV !== "production")
+                        console.error("[ReviewCard] image onError:", (e as any)?.currentTarget?.src);
                     }}
                     onLoad={() => setImageLoading(false)}
                     priority
@@ -95,7 +92,12 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                     <div className="text-center">
                       <div className="w-16 h-16 mx-auto mb-2 bg-pink-200 rounded-full flex items-center justify-center">
                         <svg className="w-8 h-8 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                          />
                         </svg>
                       </div>
                       <span className="text-pink-400 text-sm font-medium">여행 리뷰</span>
@@ -108,7 +110,12 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                 <div className="text-center">
                   <div className="w-16 h-16 mx-auto mb-2 bg-gray-300 rounded-full flex items-center justify-center">
                     <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                      />
                     </svg>
                   </div>
                   <span className="text-gray-400 text-sm">이미지 없음</span>
@@ -142,9 +149,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
             </h3>
 
             {/* 내용 미리보기 */}
-            <p className="text-gray-600 text-sm line-clamp-2 mb-4 leading-relaxed">
-              {content}
-            </p>
+            <p className="text-gray-600 text-sm line-clamp-2 mb-4 leading-relaxed">{content}</p>
 
             {/* 메타 정보 */}
             <div className="flex items-center justify-between pt-3 border-t border-gray-100">

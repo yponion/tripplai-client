@@ -45,7 +45,7 @@ const REGION_COORDINATES: Record<string, RegionCoordinate> = {
   '강남구': { x: 61, y: 126 },
   '송파구': { x: 62, y: 126 },
   '강동구': { x: 62, y: 126 },
-  
+
   // 부산 지역
   '부산': { x: 98, y: 76 },
   '부산시': { x: 98, y: 76 },
@@ -55,44 +55,44 @@ const REGION_COORDINATES: Record<string, RegionCoordinate> = {
   '남구': { x: 98, y: 75 },
   '부산진구': { x: 97, y: 75 },
   '동래구': { x: 98, y: 76 },
-  
+
   // 인천 지역
   '인천': { x: 55, y: 124 },
   '인천시': { x: 55, y: 124 },
   '인천광역시': { x: 55, y: 124 },
-  
+
   // 대전 지역
   '대전': { x: 67, y: 100 },
   '대전시': { x: 67, y: 100 },
   '대전광역시': { x: 67, y: 100 },
-  
+
   // 대구 지역
   '대구': { x: 89, y: 90 },
   '대구시': { x: 89, y: 90 },
   '대구광역시': { x: 89, y: 90 },
-  
+
   // 울산 지역
   '울산': { x: 102, y: 84 },
   '울산시': { x: 102, y: 84 },
   '울산광역시': { x: 102, y: 84 },
-  
+
   // 광주 지역
   '광주': { x: 58, y: 74 },
   '광주시': { x: 58, y: 74 },
   '광주광역시': { x: 58, y: 74 },
-  
+
   // 세종 지역
   '세종': { x: 66, y: 103 },
   '세종시': { x: 66, y: 103 },
   '세종특별자치시': { x: 66, y: 103 },
-  
+
   // 제주 지역
   '제주': { x: 52, y: 38 },
   '제주시': { x: 52, y: 38 },
   '제주특별자치도': { x: 52, y: 38 },
   '서귀포': { x: 53, y: 33 },
   '서귀포시': { x: 53, y: 33 },
-  
+
   // 경기도 지역
   '경기': { x: 60, y: 120 },
   '경기도': { x: 60, y: 120 },
@@ -158,7 +158,7 @@ const REGION_COORDINATES: Record<string, RegionCoordinate> = {
   '가평군': { x: 69, y: 133 },
   '연천': { x: 61, y: 138 },
   '연천군': { x: 61, y: 138 },
-  
+
   // 강원도 지역
   '강원': { x: 73, y: 134 },
   '강원도': { x: 73, y: 134 },
@@ -198,7 +198,7 @@ const REGION_COORDINATES: Record<string, RegionCoordinate> = {
   '고성군': { x: 85, y: 145 },
   '양양': { x: 88, y: 138 },
   '양양군': { x: 88, y: 138 },
-  
+
   // 전라도 지역
   '전북': { x: 63, y: 89 },
   '전라북도': { x: 63, y: 89 },
@@ -216,7 +216,7 @@ const REGION_COORDINATES: Record<string, RegionCoordinate> = {
   '나주시': { x: 56, y: 71 },
   '광양': { x: 73, y: 70 },
   '광양시': { x: 73, y: 70 },
-  
+
   // 경상도 지역
   '경북': { x: 89, y: 91 },
   '경상북도': { x: 89, y: 91 },
@@ -234,7 +234,7 @@ const REGION_COORDINATES: Record<string, RegionCoordinate> = {
   '창원시': { x: 90, y: 77 },
   '진주': { x: 81, y: 75 },
   '진주시': { x: 81, y: 75 },
-  
+
   // 충청도 지역
   '충북': { x: 69, y: 107 },
   '충청북도': { x: 69, y: 107 },
@@ -321,39 +321,33 @@ export interface SeasonalInfo {
 export function getGridCoordinateByRegion(regionName: string): RegionCoordinate | null {
   // 지역명에서 첫 두 글자만 추출 (예: "서울특별시" -> "서울")
   const shortRegionName = regionName.substring(0, 2);
-  
-  console.log(`지역명 검색: "${regionName}", 단축 지역명: "${shortRegionName}"`);
-  
+
+
   // 정확한 매칭 시도
   if (REGION_COORDINATES[regionName]) {
-    console.log(`정확한 지역 매칭: ${regionName} => x:${REGION_COORDINATES[regionName].x}, y:${REGION_COORDINATES[regionName].y}`);
     return REGION_COORDINATES[regionName];
   }
-  
+
   // 주요 도시명으로 시작하는지 확인
   for (const [region, coord] of Object.entries(REGION_COORDINATES)) {
     if (regionName.startsWith(region)) {
-      console.log(`시작 문자열 매칭: ${regionName} => ${region} (x:${coord.x}, y:${coord.y})`);
       return coord;
     }
   }
-  
+
   // 첫 두 글자로 매칭 시도
   if (REGION_COORDINATES[shortRegionName]) {
-    console.log(`단축명 매칭: ${shortRegionName} => x:${REGION_COORDINATES[shortRegionName].x}, y:${REGION_COORDINATES[shortRegionName].y}`);
     return REGION_COORDINATES[shortRegionName];
   }
-  
+
   // 단어 포함 여부로 검색
   for (const [region, coord] of Object.entries(REGION_COORDINATES)) {
     if (regionName.includes(region)) {
-      console.log(`부분 문자열 매칭: ${regionName} => ${region} (x:${coord.x}, y:${coord.y})`);
       return coord;
     }
   }
-  
+
   // 매칭 실패 시 서울 좌표 반환 (기본값)
-  console.warn(`지역 "${regionName}"에 대한 좌표를 찾을 수 없어 서울 좌표를 사용합니다.`);
   return REGION_COORDINATES['서울'];
 }
 
@@ -366,24 +360,23 @@ export async function getShortTermForecast(regionName: string): Promise<WeatherD
   try {
     // 공백 제거
     const cleanRegionName = regionName.trim();
-    console.log(`날씨 조회 지역: "${cleanRegionName}"`);
-    
+
     // 격자 좌표 조회
     const coord = getGridCoordinateByRegion(cleanRegionName);
     if (!coord) {
       throw new Error(`지역 "${cleanRegionName}"에 대한 좌표를 찾을 수 없습니다.`);
     }
-    
+
     // 현재 날짜 포맷팅 (yyyyMMdd)
     const today = new Date();
     const year = today.getFullYear();
     const month = String(today.getMonth() + 1).padStart(2, '0');
     const day = String(today.getDate()).padStart(2, '0');
     const formattedDate = `${year}${month}${day}`;
-    
+
     // 현재 시간 포맷팅 - API 요청에 맞춰 발표 시간 사용
     const hour = today.getHours();
-    
+
     // 기상청 발표 시간은 02:10, 05:10, 08:10, 11:10, 14:10, 17:10, 20:10, 23:10
     // 가장 최근 발표 시간으로 설정
     let baseTime;
@@ -406,48 +399,41 @@ export async function getShortTermForecast(regionName: string): Promise<WeatherD
     } else {
       baseTime = '2300';
     }
-    
+
     // 기준 날짜 설정 (새벽 시간대는 전날 데이터 사용)
-    const baseDate = (hour < 2) 
+    const baseDate = (hour < 2)
       ? new Date(today.setDate(today.getDate() - 1)).toISOString().slice(0, 10).replace(/-/g, '')
       : formattedDate;
-    
-    console.log(`날씨 API 요청 정보: 지역=${cleanRegionName}, 좌표(${coord.x},${coord.y}), 기준일자=${baseDate}, 기준시간=${baseTime}`);
-    
+
     // Next.js API 라우트를 통해 간접 호출 (CORS 우회)
     const url = `/api/weather/forecast?serviceKey=${API_KEY}&base_date=${baseDate}&base_time=${baseTime}&nx=${coord.x}&ny=${coord.y}`;
-    
-    console.log(`날씨 API 요청 URL: ${url}`);
-    
+
     const response = await fetch(url);
-    
+
     if (!response.ok) {
       throw new Error(`날씨 API 오류: ${response.status} ${response.statusText}`);
     }
-    
+
     const data = await response.json();
-    
+
     // 응답 데이터 파싱 및 가공
     if (data.response?.body?.items?.item) {
       // 시간별로 데이터 정리
       const forecastMap = new Map<string, WeatherData>();
       const forecastItems = data.response.body.items.item;
-      
-      console.log(`날씨 API 응답: 총 ${forecastItems.length}개 항목 수신`);
-      
+
       // 현재 시간 이후의 예보만 필터링하기 위한 기준 시간 (현재 시간의 시간대)
       const currentHourString = String(hour).padStart(2, '0') + '00';
-      console.log(`현재 시간대: ${currentHourString}`);
-      
+
       // 각 항목을 순회하며 시간별로 데이터 모으기
       forecastItems.forEach((item: any) => {
         const dateTime = `${item.fcstDate}-${item.fcstTime}`;
-        
+
         // 현재 날짜 기준으로 미래 날짜이거나, 
         // 같은 날짜라면 현재 시간 이후의 예보만 처리
         const isCurrentDate = item.fcstDate === formattedDate;
         const isFutureTime = isCurrentDate ? (item.fcstTime >= currentHourString) : true;
-        
+
         if (!forecastMap.has(dateTime)) {
           forecastMap.set(dateTime, {
             date: item.fcstDate,
@@ -461,9 +447,9 @@ export async function getShortTermForecast(regionName: string): Promise<WeatherD
             wsd: 0
           });
         }
-        
+
         const forecast = forecastMap.get(dateTime)!;
-        
+
         // 각 카테고리별 데이터 매핑
         switch (item.category) {
           case 'SKY': // 하늘상태
@@ -489,18 +475,10 @@ export async function getShortTermForecast(regionName: string): Promise<WeatherD
             break;
         }
       });
-      
+
       // Map을 배열로 변환
       const forecastArray = Array.from(forecastMap.values());
-      
-      // 데이터 유효성 체크 및 로깅
-      if (forecastArray.length > 0) {
-        const firstForecast = forecastArray[0];
-        console.log(`첫 번째 예보 정보: 시간=${firstForecast.date} ${firstForecast.time}, 날씨=${firstForecast.sky}, 기온=${firstForecast.tmp}°C, 강수확률=${firstForecast.pop}%`);
-      } else {
-        console.warn('처리된 예보 데이터가 없습니다.');
-      }
-      
+
       // 시간순 정렬 후 반환
       return forecastArray.sort((a, b) => {
         if (a.date === b.date) {
@@ -509,8 +487,7 @@ export async function getShortTermForecast(regionName: string): Promise<WeatherD
         return a.date.localeCompare(b.date);
       });
     }
-    
-    console.warn('날씨 API 응답에 예보 항목이 없습니다.');
+
     return [];
   } catch (error) {
     console.error('날씨 데이터 가져오기 실패:', error);
@@ -558,59 +535,53 @@ function getPrecipitationType(code: number): string {
  * 지역 특성과 키워드에 따른 최적 여행 시기 판단 함수
  */
 export function getBestTravelSeason(addressOrTitle: string, overview: string): SeasonalInfo {
-  // 디버깅 정보 추가
-  console.log(`여행지 정보 분석 - 주소/제목: "${addressOrTitle}", 개요: "${overview?.substring(0, 50)}..."`);
-  
   // 주요 키워드 기반 분석 - 우선순위를 위해 명확한 키워드 목록 사용
-  const isBeach = overview.includes('해변') || 
-                overview.includes('바다') || 
-                overview.includes('해수욕장') ||
-                addressOrTitle.includes('해변') || 
-                addressOrTitle.includes('바다');
-  
-  const isMountain = addressOrTitle.includes('산') || 
-                    addressOrTitle.includes('국립공원') ||
-                    addressOrTitle.includes('봉') ||
-                    addressOrTitle.includes('계곡') ||
-                    overview.includes('산') ||
-                    overview.includes('등산') || 
-                    overview.includes('산맥') ||
-                    overview.includes('봉우리') ||
-                    overview.includes('계곡') ||
-                    overview.includes('트레킹');
-  
+  const isBeach = overview.includes('해변') ||
+    overview.includes('바다') ||
+    overview.includes('해수욕장') ||
+    addressOrTitle.includes('해변') ||
+    addressOrTitle.includes('바다');
+
+  const isMountain = addressOrTitle.includes('산') ||
+    addressOrTitle.includes('국립공원') ||
+    addressOrTitle.includes('봉') ||
+    addressOrTitle.includes('계곡') ||
+    overview.includes('산') ||
+    overview.includes('등산') ||
+    overview.includes('산맥') ||
+    overview.includes('봉우리') ||
+    overview.includes('계곡') ||
+    overview.includes('트레킹');
+
   // 스키장 검색 시 더 명확한 키워드 사용
-  const isSkiResort = addressOrTitle.toLowerCase().includes('스키') || 
-                    addressOrTitle.toLowerCase().includes('스노우') ||
-                    addressOrTitle.toLowerCase().includes('snow') ||
-                    addressOrTitle.toLowerCase().includes('ski') ||
-                    overview.toLowerCase().includes('스키장') || 
-                    overview.toLowerCase().includes('스키 리조트') ||
-                    overview.toLowerCase().includes('스키타기') ||
-                    overview.toLowerCase().includes('스노보드');
-  
-  const isFlower = overview.includes('꽃') || 
-                  overview.includes('벚꽃') || 
-                  overview.includes('진달래') ||
-                  overview.includes('철쭉') ||
-                  addressOrTitle.includes('꽃');
-  
-  const isLeaf = overview.includes('단풍') || 
-                overview.includes('가을') || 
-                overview.includes('낙엽') ||
-                addressOrTitle.includes('단풍');
-  
-  const isIsland = overview.includes('섬') || 
-                  addressOrTitle.includes('도') || 
-                  addressOrTitle.includes('섬');
-  
+  const isSkiResort = addressOrTitle.toLowerCase().includes('스키') ||
+    addressOrTitle.toLowerCase().includes('스노우') ||
+    addressOrTitle.toLowerCase().includes('snow') ||
+    addressOrTitle.toLowerCase().includes('ski') ||
+    overview.toLowerCase().includes('스키장') ||
+    overview.toLowerCase().includes('스키 리조트') ||
+    overview.toLowerCase().includes('스키타기') ||
+    overview.toLowerCase().includes('스노보드');
+
+  const isFlower = overview.includes('꽃') ||
+    overview.includes('벚꽃') ||
+    overview.includes('진달래') ||
+    overview.includes('철쭉') ||
+    addressOrTitle.includes('꽃');
+
+  const isLeaf = overview.includes('단풍') ||
+    overview.includes('가을') ||
+    overview.includes('낙엽') ||
+    addressOrTitle.includes('단풍');
+
+  const isIsland = overview.includes('섬') ||
+    addressOrTitle.includes('도') ||
+    addressOrTitle.includes('섬');
+
   const isJeju = addressOrTitle.includes('제주');
 
-  // 키워드 매칭 결과 표시
-  console.log(`키워드 매칭 결과: 해변=${isBeach}, 산=${isMountain}, 스키=${isSkiResort}, 꽃=${isFlower}, 단풍=${isLeaf}, 섬=${isIsland}, 제주=${isJeju}`);
-  
   let result: SeasonalInfo;
-  
+
   // 지역별 최적 여행 시기 결정 - 우선순위 조정
   // 명확한 자연 환경부터 체크
   if (isJeju) {
@@ -675,7 +646,6 @@ export function getBestTravelSeason(addressOrTitle: string, overview: string): S
     };
   }
 
-  console.log(`추천 시기 결정 결과: ${result.bestSeason}, ${result.months}, ${result.conditions}`);
   return result;
 }
 
@@ -684,7 +654,7 @@ export function getBestTravelSeason(addressOrTitle: string, overview: string): S
  * - 오늘부터 1주일 간의 예보를 기반으로 여행 적합도 평가
  * - 강수확률, 기온, 풍속 등 고려
  */
-export async function getTravelSuitabilityForecasting(regionName: string): Promise<{date: string, score: number}[]> {
+export async function getTravelSuitabilityForecasting(regionName: string): Promise<{ date: string, score: number }[]> {
   // 향후 구현...
   return [];
 }

@@ -25,7 +25,6 @@ const fastapiClient = axios.create({
   },
 });
 
-console.log('FastAPI URL:', FASTAPI_URL);
 
 // Request interceptor for adding auth token
 api.interceptors.request.use(async (config) => {
@@ -64,12 +63,6 @@ interface TravelPlanData {
 // 여행 추천 API
 export const recommendationApi = {
   getTravelRecommendations: (areaCode: string, sigunguCode: string, categories: string[], days: number) => {
-    console.log('Sending recommendation request:', {
-      area_code: areaCode,
-      sigungu_code: sigunguCode,
-      category_codes: categories,
-      days: days
-    });
     return fastapiClient.post('/api/v1/recommendations/', {
       area_code: areaCode,
       sigungu_code: sigunguCode,
@@ -80,8 +73,6 @@ export const recommendationApi = {
 
   // 추천 결과 저장 API
   saveTravelRecommendation: (data: TravelPlanData, proofImage?: File) => {
-    console.log('Saving travel recommendation:', data);
-
     const formData = new FormData();
 
     // JSON 데이터를 FormData에 추가
@@ -104,15 +95,12 @@ export const authApi = {
   /** 일반 로그인 */
   login: async (email: string, password: string) => {
     try {
-      console.log("🌐 로그인 API 호출 (직접 서버):", { email, password });
-
       // 직접 서버로 호출
       const res = await api.post('/auth/login', {
         email,
         password,
       });
 
-      console.log("📨 서버 응답:", res.data);
       return res.data;
     } catch (error: any) {
       console.error("❌ 로그인 API 호출 중 에러:", error);
@@ -144,7 +132,6 @@ export const authApi = {
       const res = await axios.post(`${API_URL}/auth/initializeToken`, {}, { withCredentials: true })
       return res.data
     } catch (error) {
-      console.log("로그아웃 API 호출 중 에러: ", error)
     }
   },
 

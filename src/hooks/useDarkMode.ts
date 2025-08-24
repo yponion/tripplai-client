@@ -28,15 +28,15 @@ const useThemeMode = () => {
     // localStorage에서 테마 불러오기
     const savedThemeMode = localStorage.getItem('themeMode') as ThemeMode | null;
     const initialTheme = savedThemeMode || 'original';
-    
+
     // 상태 업데이트
     setThemeMode(initialTheme);
     setIsLoading(false);
     globalTheme = initialTheme;
-    
+
     // HTML에 클래스 적용
     updateThemeClasses(initialTheme);
-    
+
     // 스토리지 이벤트 리스너 추가 (다른 탭에서 테마 변경 시 동기화)
     const handleStorageChange = (e: StorageEvent) => {
       if (e.key === 'themeMode') {
@@ -48,7 +48,7 @@ const useThemeMode = () => {
         }
       }
     };
-    
+
     window.addEventListener('storage', handleStorageChange);
     return () => {
       window.removeEventListener('storage', handleStorageChange);
@@ -58,22 +58,22 @@ const useThemeMode = () => {
   // HTML 클래스 업데이트 함수
   const updateThemeClasses = (mode: ThemeMode) => {
     if (typeof document === 'undefined') return;
-    
+
     const htmlElement = document.documentElement;
-    
+
     // 모든 테마 클래스 제거
     htmlElement.classList.remove('dark', 'light', 'original');
-    
+
     // 해당 테마 클래스 추가
     htmlElement.classList.add(mode);
-    
+
     // 다크모드 특별 처리 (tailwind dark: 선택자를 위해)
     if (mode === 'dark') {
       htmlElement.classList.add('dark');
     } else {
       htmlElement.classList.remove('dark');
     }
-    
+
     // 바디에 배경색 명시적 적용
     if (mode === 'dark') {
       document.body.style.backgroundColor = '#111827'; // 더 어두운 회색
@@ -88,10 +88,10 @@ const useThemeMode = () => {
       document.body.style.color = '#111827';
       document.body.classList.remove('dark-mode');
     }
-    
+
     // 특정 DOM 요소들의 스타일을 즉시 업데이트
     updateSpecificElements(mode);
-    
+
     // 전체 앱에 테마 변경 알림 (커스텀 이벤트)
     if (typeof window !== 'undefined') {
       const themeChangeEvent = new CustomEvent('themeChange', { detail: mode });
@@ -186,7 +186,7 @@ const useThemeMode = () => {
           (element as HTMLElement).style.color = '';
         }
       });
-      
+
       // 대시보드 페이지 배경 업데이트 (새로고침 없이 즉시 적용)
       const dashboardBg = document.querySelector('div[class*="py-12 bg-"]');
       if (dashboardBg) {
@@ -205,7 +205,7 @@ const useThemeMode = () => {
           (dashboardBg as HTMLElement).classList.add('from-pink-50', 'to-white');
         }
       }
-      
+
       // 특별히 gradient 배경을 가진 요소들 처리
       const gradientBgs = document.querySelectorAll('div[class*="bg-gradient-to-b"]');
       gradientBgs.forEach(element => {
@@ -218,7 +218,7 @@ const useThemeMode = () => {
           (element as HTMLElement).style.background = 'linear-gradient(to bottom, #fdf2f8, #ffffff)';
         }
       });
-      
+
       // 전체 body 배경색 강제 업데이트
       if (mode === 'dark') {
         document.body.style.backgroundColor = '#111827';
@@ -239,24 +239,22 @@ const useThemeMode = () => {
   // 테마 변경 함수
   const changeTheme = (mode: ThemeMode) => {
     if (typeof window === 'undefined') return;
-    
+
     // 먼저 DOM 상태를 업데이트 (즉시 반영)
     updateThemeClasses(mode);
-    
+
     // 그 다음 React 상태 업데이트 (UI 일관성)
     setThemeMode(mode);
     globalTheme = mode;
-    
+
     // localStorage에 저장
     localStorage.setItem('themeMode', mode);
-    
-    // 디버깅용 콘솔 로그
-    console.log(`테마 모드 변경: ${mode}`);
+
   };
 
   // 다크모드 호환성을 위한 변수들
   const isDarkMode = themeMode === 'dark';
-  
+
   // 테마 순환 함수
   const cycleTheme = () => {
     if (themeMode === 'original') {
@@ -267,7 +265,7 @@ const useThemeMode = () => {
       changeTheme('original');
     }
   };
-  
+
   // 기존 토글 함수도 지원 (다크모드 <-> 라이트모드)
   const toggleDarkMode = () => {
     if (themeMode === 'dark') {

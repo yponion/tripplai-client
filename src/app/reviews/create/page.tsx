@@ -18,7 +18,7 @@ export default function CreateReviewPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [error, setError] = useState("");
-  const [extractedInfo, setExtractedInfo] = useState<{title?: string, address?: string}>({});
+  const [extractedInfo, setExtractedInfo] = useState<{ title?: string; address?: string }>({});
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -28,37 +28,29 @@ export default function CreateReviewPage() {
 
     setIsAnalyzing(true);
     try {
-      console.log('영수증 분석 시작:', file.name, file.size);
-      
       const formData = new FormData();
-      formData.append('image', file);
+      formData.append("image", file);
 
-      const response = await fetch('/api/vision', {
-        method: 'POST',
+      const response = await fetch("/api/vision", {
+        method: "POST",
         body: formData,
       });
 
-      console.log('Vision API 응답 상태:', response.status);
-
       if (!response.ok) {
         const errorData = await response.text();
-        console.error('Vision API 오류 응답:', errorData);
         throw new Error(`영수증 분석 실패: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log('Vision API 전체 응답:', result);
 
       if (result.success && result.extractedText) {
         const text = result.extractedText;
-        console.log('추출된 원본 텍스트:', text);
-        
+
         // 텍스트를 줄별로 분리
-        const lines = text.split('\n').filter((line: string) => line.trim());
-        console.log('분리된 줄들:', lines);
+        const lines = text.split("\n").filter((line: string) => line.trim());
 
         // 1. 상호명 추출 (첫 번째 유의미한 줄)
-        let extractedTitle = '';
+        let extractedTitle = "";
         for (const line of lines) {
           const cleaned = line.trim();
           // 숫자나 특수문자로만 이루어진 줄은 제외
@@ -69,24 +61,24 @@ export default function CreateReviewPage() {
         }
 
         // 2. 지역/주소 추출 (더 스마트한 패턴)
-        let extractedAddress = '';
-        
+        let extractedAddress = "";
+
         // 주요 도시/지역 패턴 (KTX 역명 등 포함)
         const locationPatterns = [
           /(서울|부산|대구|인천|광주|대전|울산|세종|천안|아산|천안아산|평택|수원|용산|영등포|강남|명동|홍대)/i,
           /(경기도|강원도|충청북도|충청남도|전라북도|전라남도|경상북도|경상남도|제주도)/i,
           /.*주소[:\s]*(.+)/i,
-          /.*(구|시|군|동|로|길).*/i
+          /.*(구|시|군|동|로|길).*/i,
         ];
-        
+
         // 우선순위: 주요 도시명 -> 광역시/도 -> 주소 패턴 -> 기타
         for (const pattern of locationPatterns) {
           for (const line of lines) {
             const match = line.match(pattern);
             if (match) {
               let location = match[1] || match[0];
-              location = location.replace(/주소[:\s]*/, '').trim();
-              
+              location = location.replace(/주소[:\s]*/, "").trim();
+
               // 너무 긴 텍스트는 제외 (한 줄 전체가 매칭되는 경우)
               if (location.length <= 20 && location.length > 1) {
                 extractedAddress = location;
@@ -100,44 +92,42 @@ export default function CreateReviewPage() {
         // 3. 지역 정보만 적용 (제목은 자동 입력하지 않음)
         if (extractedAddress && !address) {
           setAddress(extractedAddress);
-          console.log('지역 정보 설정:', extractedAddress);
         }
 
         // 4. 추출된 정보 저장 (사진 위에 표시용)
         setExtractedInfo({
           title: extractedTitle,
-          address: extractedAddress
+          address: extractedAddress,
         });
 
         alert(`✅ 영수증 분석 완료!
 
 📝 추출된 정보:
-• 상호명: ${extractedTitle || '없음'}
-• 지역: ${extractedAddress || '없음'}
+• 상호명: ${extractedTitle || "없음"}
+• 지역: ${extractedAddress || "없음"}
 
 지역 정보가 자동으로 입력되었습니다!`);
-        
       } else {
-        console.error('API 응답에 success나 extractedText가 없음:', result);
-        throw new Error('텍스트 추출 실패');
+        console.error("API 응답에 success나 extractedText가 없음:", result);
+        throw new Error("텍스트 추출 실패");
       }
     } catch (error) {
-      console.error('영수증 분석 상세 오류:', error);
-      
-      let errorMessage = '영수증 분석 중 오류가 발생했습니다.';
-      
+      console.error("영수증 분석 상세 오류:", error);
+
+      let errorMessage = "영수증 분석 중 오류가 발생했습니다.";
+
       if (error instanceof Error) {
-        if (error.message.includes('401')) {
-          errorMessage = 'Google API 키가 유효하지 않습니다.';
-        } else if (error.message.includes('403')) {
-          errorMessage = 'Google Vision API 접근 권한이 없습니다.';
-        } else if (error.message.includes('429')) {
-          errorMessage = 'API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.';
+        if (error.message.includes("401")) {
+          errorMessage = "Google API 키가 유효하지 않습니다.";
+        } else if (error.message.includes("403")) {
+          errorMessage = "Google Vision API 접근 권한이 없습니다.";
+        } else if (error.message.includes("429")) {
+          errorMessage = "API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.";
         } else {
           errorMessage = error.message;
         }
       }
-      
+
       alert(`❌ ${errorMessage}\n\n수동으로 정보를 입력해주세요.`);
     } finally {
       setIsAnalyzing(false);
@@ -148,10 +138,10 @@ export default function CreateReviewPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const newFiles = Array.from(e.target.files);
-      
+
       // 파일 객체 저장
-      setImages(prev => [...prev, ...newFiles]);
-      
+      setImages((prev) => [...prev, ...newFiles]);
+
       // 미리보기 URL 생성
       newFiles.forEach((file) => {
         const reader = new FileReader();
@@ -172,13 +162,13 @@ export default function CreateReviewPage() {
 
   // 이미지 제거
   const removeImage = (index: number) => {
-    setImages(prev => prev.filter((_, i) => i !== index));
+    setImages((prev) => prev.filter((_, i) => i !== index));
     setImagePreviews((prev) => prev.filter((_, i) => i !== index));
-    
+
     // 첫 번째 이미지 제거 시 추출된 정보와 지역 정보도 초기화
     if (index === 0) {
       setExtractedInfo({});
-      setAddress(''); // 지역 정보도 함께 초기화
+      setAddress(""); // 지역 정보도 함께 초기화
     }
   };
 
@@ -187,10 +177,10 @@ export default function CreateReviewPage() {
     if (images.length > 0) {
       // 기존 추출 정보 초기화
       setExtractedInfo({});
-      setAddress('');
+      setAddress("");
       analyzeReceipt(images[0]);
     } else {
-      alert('분석할 이미지를 먼저 업로드해주세요.');
+      alert("분석할 이미지를 먼저 업로드해주세요.");
     }
   };
 
@@ -232,7 +222,7 @@ export default function CreateReviewPage() {
   };
 
   // 로그인 확인
-  if (typeof window !== 'undefined' && !sessionStorage.getItem("accessToken")) {
+  if (typeof window !== "undefined" && !sessionStorage.getItem("accessToken")) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh]">
         <h2 className="text-2xl font-bold mb-4">로그인이 필요합니다</h2>
@@ -300,25 +290,21 @@ export default function CreateReviewPage() {
             {imagePreviews.map((preview, index) => (
               <div key={index} className="relative w-32 h-32 rounded-md overflow-hidden border-2 border-pink-200">
                 <Image src={preview} alt={`영수증 ${index + 1}`} fill className="object-cover" />
-                
+
                 {/* 첫 번째 이미지에만 분석 결과 표시 */}
                 {index === 0 && (extractedInfo.title || extractedInfo.address) && (
                   <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
                     <div className="bg-white bg-opacity-95 p-2 rounded text-xs text-center max-w-full">
                       {extractedInfo.title && (
-                        <p className="font-semibold text-pink-600 truncate">
-                          📍 {extractedInfo.title}
-                        </p>
+                        <p className="font-semibold text-pink-600 truncate">📍 {extractedInfo.title}</p>
                       )}
                       {extractedInfo.address && (
-                        <p className="text-gray-700 mt-1 truncate">
-                          🗺️ {extractedInfo.address}
-                        </p>
+                        <p className="text-gray-700 mt-1 truncate">🗺️ {extractedInfo.address}</p>
                       )}
                     </div>
                   </div>
                 )}
-                
+
                 <button
                   type="button"
                   onClick={() => removeImage(index)}
@@ -341,9 +327,7 @@ export default function CreateReviewPage() {
                 ) : (
                   <FaCamera className="text-pink-400 text-xl mb-1" />
                 )}
-                <p className="text-xs text-gray-500">
-                  {isAnalyzing ? '분석중' : '사진 추가'}
-                </p>
+                <p className="text-xs text-gray-500">{isAnalyzing ? "분석중" : "사진 추가"}</p>
               </div>
             </button>
           </div>

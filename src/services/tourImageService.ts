@@ -80,7 +80,7 @@ function shuffleArray<T>(array: T[]): T[] {
 
 // 키워드를 기반으로 이미지 검색
 export const getImagesByKeyword = async (
-  location: string, 
+  location: string,
   keyword: string = '',
   tag: string = ''
 ): Promise<string[]> => {
@@ -91,38 +91,32 @@ export const getImagesByKeyword = async (
       .split(',')
       .map(k => k.trim())
       .filter(Boolean);
-    
-    console.log('검색 키워드:', keywords);
-    console.log('검색 위치:', location);
-    
+
     // 1. 키워드로 이미지 검색
     if (keywords.length > 0) {
       for (const k of keywords) {
         for (const [category, images] of Object.entries(categoryImages)) {
           if (k.includes(category) || category.includes(k)) {
-            console.log(`카테고리 '${category}'에 맞는 이미지 반환`);
             return shuffleArray(images);
           }
         }
       }
     }
-    
+
     // 2. 위치로 이미지 검색
     if (location) {
       const locationParts = location.split(/\s+/).filter(Boolean);
-      
+
       for (const part of locationParts) {
         for (const [loc, images] of Object.entries(locationImages)) {
           if (part.includes(loc) || loc.includes(part)) {
-            console.log(`위치 '${loc}'에 맞는 이미지 반환`);
             return shuffleArray(images);
           }
         }
       }
     }
-    
+
     // 3. 기본 이미지 반환
-    console.log('일치하는 이미지 없음, 기본 이미지 반환');
     return shuffleArray(defaultImages);
   } catch (error) {
     console.error('이미지 검색 오류:', error);
@@ -140,11 +134,11 @@ export const getDefaultImage = (location: string): string => {
     '전주': '/images/locations/jeonju/jeonju1.jpg',
     '강원도': '/images/locations/gangwon/gangwon1.jpg'
   };
-  
+
   // 위치에 해당하는 이미지가 있으면 사용, 없으면 기본 이미지 사용
   for (const [key, value] of Object.entries(locationMap)) {
     if (location.includes(key)) return value;
   }
-  
+
   return '/images/default/default1.jpg';
 }; 

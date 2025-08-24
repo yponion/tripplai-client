@@ -206,7 +206,6 @@ export default function Login(props?: LoginProps) {
 
   /** 이메일 로그인 */
   const handleLocalLogin = async () => {
-    console.log("🚀 로그인 시도:", { loginEmail, loginPassword });
     setLoginErrorMessage("");
 
     if (!loginEmail) {
@@ -222,26 +221,21 @@ export default function Login(props?: LoginProps) {
     }
 
     try {
-      console.log("🌐 API 호출 시작...");
       const res = await authApi.login(loginEmail, loginPassword);
-      console.log("📨 API 응답:", res);
-      
+
       // res가 없거나 code가 없는 경우 처리
       if (!res || !res.code) {
-        console.log("❌ 응답이 없거나 잘못된 형식:", res);
         setLoginErrorMessage("서버와의 연결에 문제가 있습니다. 다시 시도해주세요.");
         return;
       }
-      
+
       if (res.code !== "SU") {
-        console.log("❌ 로그인 실패:", res);
         setLoginErrorMessage(res.message || AuthErrorMessage.USER_NOT_FOUND);
         return;
       }
-      
-      console.log("✅ 로그인 성공!");
+
       sessionStorage.setItem("accessToken", res.accessToken);
-      
+
       // 모달 기반 로그인이므로 콜백을 통해 모달을 닫음
       if (onLoginSuccess) {
         onLoginSuccess();
@@ -352,7 +346,6 @@ export default function Login(props?: LoginProps) {
 
     try {
       const res = await authApi.signUp(nickname, signupEmail, signupPassword, phoneNumber);
-      // console.log(res);
       if (res?.code === "SU") {
         setNickname("");
         setSignupEmail("");
@@ -404,7 +397,13 @@ export default function Login(props?: LoginProps) {
         {isLoginTab ? (
           <>
             {/* 이메일 로그인 */}
-            <form onSubmit={(e) => { e.preventDefault(); handleLocalLogin(); }} className="space-y-4">
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                handleLocalLogin();
+              }}
+              className="space-y-4"
+            >
               <div>
                 <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-1">
                   이메일

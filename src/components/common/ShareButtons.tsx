@@ -46,7 +46,6 @@ export default function ShareButtons({ url, title, description, location }: Shar
           // 외부에서 접근 가능한 URL 생성
           const fullImageUrl = PUBLIC_DOMAIN + imagePath;
           setShareImageUrl(fullImageUrl);
-          console.log("공유용 이미지 설정:", fullImageUrl);
           return;
         }
 
@@ -58,7 +57,6 @@ export default function ShareButtons({ url, title, description, location }: Shar
             // 전체 URL로 변환
             const fullImageUrl = PUBLIC_DOMAIN + images[0];
             setShareImageUrl(fullImageUrl);
-            console.log("태그 기반 이미지 설정:", fullImageUrl);
             return;
           }
         }
@@ -67,13 +65,11 @@ export default function ShareButtons({ url, title, description, location }: Shar
         const defaultImagePath = getDefaultImage(locationToUse || title);
         const fallbackImageUrl = PUBLIC_DOMAIN + defaultImagePath;
         setShareImageUrl(fallbackImageUrl);
-        console.log("기본 이미지 URL 설정:", fallbackImageUrl);
       } catch (error) {
         console.error("공유 이미지 가져오기 실패:", error);
         // 오류 시 기본 이미지 사용
         const fallbackImageUrl = PUBLIC_DOMAIN + "/images/reviews-og.jpg";
         setShareImageUrl(fallbackImageUrl);
-        console.log("오류 대체 이미지 URL 설정:", fallbackImageUrl);
       } finally {
         setIsImageLoading(false);
       }
@@ -165,21 +161,14 @@ export default function ShareButtons({ url, title, description, location }: Shar
 
   const shareToKakao = () => {
     try {
-      console.log("카카오톡 공유 시도...");
-      console.log("window.Kakao 객체 존재 여부:", !!window.Kakao);
-      console.log("window.Kakao.isInitialized():", window.Kakao?.isInitialized());
-      console.log("window.Kakao.Share 존재 여부:", !!window.Kakao?.Share);
-
       if (!window.Kakao) {
         alert("카카오톡 SDK가 로드되지 않았습니다. 페이지를 새로고침 후 다시 시도해주세요.");
         return;
       }
 
       if (!window.Kakao.isInitialized()) {
-        console.log("카카오 SDK 초기화 시도...");
         if (process.env.NEXT_PUBLIC_KAKAO_APP_KEY) {
           window.Kakao.init(process.env.NEXT_PUBLIC_KAKAO_APP_KEY);
-          console.log("초기화 후 상태:", window.Kakao.isInitialized());
         } else {
           console.error("카카오 API 키가 설정되지 않았습니다.");
         }
@@ -192,9 +181,6 @@ export default function ShareButtons({ url, title, description, location }: Shar
 
       // 공유할 URL이 외부에서 접근 가능한지 확인
       const publicUrl = getPublicUrl(url);
-
-      console.log("카카오톡 공유 이미지:", shareImageUrl);
-      console.log("카카오톡 공유 URL:", publicUrl);
 
       window.Kakao.Share.sendDefault({
         objectType: "feed",
@@ -216,9 +202,6 @@ export default function ShareButtons({ url, title, description, location }: Shar
             },
           },
         ],
-        callback: () => {
-          console.log("카카오톡 공유 완료");
-        },
         serverCallbackArgs: {
           shared: "true",
           reviewId: publicUrl.split("/").pop() || "",

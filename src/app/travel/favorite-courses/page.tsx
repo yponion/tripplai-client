@@ -22,8 +22,6 @@ function LikedCoursesList({ courses, destinations }: { courses: Course[]; destin
   const itemsPerPage = 3;
   const totalPages = Math.ceil(courses.length / itemsPerPage);
   const [page, setPage] = useState(0);
-  console.log("코스:", courses);
-  console.log("찾은 dest:", destinations);
 
   const visibleCourses = useMemo(
     () => courses.slice(page * itemsPerPage, page * itemsPerPage + itemsPerPage),
@@ -173,7 +171,6 @@ export default function FavoriteCoursesPage() {
         const dests = contentIds.length ? await destinationApi.getByContentIds(contentIds) : [];
 
         const destArray = Object.values(dests);
-        console.log("diqdiq", dests);
         setLikedCourses(liked);
         setDestinations(destArray);
       } catch {

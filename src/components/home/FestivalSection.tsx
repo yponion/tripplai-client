@@ -45,7 +45,6 @@ async function filterValidImages(courses: Course[]) {
   for (const course of courses) {
     // 이미지 URL이 이미 사용되었는지 확인
     if (imageUrls.has(course.thumbnailUrl)) {
-      console.log(`중복 이미지 발견: ${course.thumbnailUrl}, 코스 제외: ${course.title}`);
       continue;
     }
 
@@ -78,14 +77,10 @@ async function fetchValidCoursesUntilThreshold(threshold = COURSE_COUNT, maxAtte
 
   // 유효한 코스가 threshold에 도달하거나 최대 시도 횟수에 도달할 때까지 반복
   while (validCourses.length < threshold && attempts < maxAttempts) {
-    console.log(`시도 ${attempts + 1}: 현재 유효한 코스 ${validCourses.length}개, 목표 ${threshold}개`);
-
     const newCourses = await fetchCourseData(page, 50);
 
     if (newCourses.length === 0) {
-      console.log("더 이상 가져올 데이터가 없습니다.");
       if (validCourses.length < threshold) {
-        console.log(`충분한 코스를 찾지 못했습니다. 현재 ${validCourses.length}개, 목표 ${threshold}개`);
         // 더 많은 시도를 위해 페이지를 초기화하고 다시 시작
         page = 0;
       }
@@ -95,7 +90,6 @@ async function fetchValidCoursesUntilThreshold(threshold = COURSE_COUNT, maxAtte
 
     // 새로 가져온 코스에서 유효한 이미지만 필터링 (중복 제거)
     const newValidCourses = await filterValidImages(newCourses);
-    console.log(`페이지 ${page}에서 ${newCourses.length}개 중 ${newValidCourses.length}개의 유효한 코스 발견`);
 
     // 누적된 유효한 코스에 추가 (중복 체크)
     for (const course of newValidCourses) {
@@ -107,7 +101,6 @@ async function fetchValidCoursesUntilThreshold(threshold = COURSE_COUNT, maxAtte
         }
       }
     }
-    console.log(`누적된 유효한 코스: ${validCourses.length}개`);
 
     page++;
     attempts++;
@@ -126,7 +119,6 @@ async function fetchValidCoursesUntilThreshold(threshold = COURSE_COUNT, maxAtte
 
   // 정확히 threshold 개수만큼만 반환
   const result = validCourses.slice(0, threshold);
-  console.log(`최종 반환되는 유효한 코스: ${result.length}개`);
   return result;
 }
 
@@ -138,12 +130,10 @@ export default function RecommendedCoursesSection() {
   useEffect(() => {
     const loadCourses = async () => {
       try {
-        console.log("코스 로딩 시작...");
         const validCourses = await fetchValidCoursesUntilThreshold(COURSE_COUNT);
 
         // 정확히 COURSE_COUNT개만 설정
         setCourses(validCourses.slice(0, COURSE_COUNT));
-        console.log(`최종 설정된 코스 수: ${validCourses.slice(0, COURSE_COUNT).length}`);
 
         setIsLoading(false);
       } catch (err) {

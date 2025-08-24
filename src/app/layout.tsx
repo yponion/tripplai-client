@@ -6,7 +6,7 @@ import "./globals.css";
 import "../styles/home.css";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { Toaster } from 'react-hot-toast';
+import { Toaster } from "react-hot-toast";
 import { MSWProvider } from "@/components/providers/MSWProvider";
 import dynamic from "next/dynamic";
 import RQProvider from "@/components/providers/RQProvider";
@@ -120,9 +120,6 @@ const ThemeInitializer = dynamic(
           document.body.style.backgroundColor = "#ffffff";
           document.body.style.color = "#111827";
         }
-
-        // 효과 확인을 위한 콘솔 메시지
-        console.log("테마 업데이트 완료:", mode, new Date().toLocaleTimeString());
       };
 
       return null;
@@ -166,17 +163,17 @@ export default function RootLayout({
               position="top-center"
               toastOptions={{
                 style: {
-                  background: '#363636',
-                  color: '#fff',
+                  background: "#363636",
+                  color: "#fff",
                 },
                 success: {
                   style: {
-                    background: '#10b981',
+                    background: "#10b981",
                   },
                 },
                 error: {
                   style: {
-                    background: '#ef4444',
+                    background: "#ef4444",
                   },
                 },
               }}

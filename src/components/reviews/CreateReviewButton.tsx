@@ -9,78 +9,58 @@ export default function CreateReviewButton() {
 
   const handleSubmit = async (reviewData: any, proofImage?: File | null, reviewImages?: File[]) => {
     try {
-      console.log("🚀 리뷰 등록 시작:", reviewData);
-      console.log("📷 증명 이미지:", proofImage ? `${proofImage.name} (${proofImage.size} bytes)` : "없음");
-      console.log("🖼️ 리뷰 이미지들:", reviewImages?.map(img => `${img.name} (${img.size} bytes)`) || []);
-
       // FormData 생성 (이미지 파일 포함)
       const formData = new FormData();
-      
+
       // 리뷰 데이터를 JSON으로 추가 - Blob으로 감싸서 Content-Type 명시
       const reviewJson = {
         title: reviewData.title,
         content: reviewData.content,
         rating: reviewData.rating,
-        address: reviewData.location || ""
+        address: reviewData.location || "",
       };
-      
+
       // 리뷰 이미지만 추가 (영수증 이미지는 완전히 제외)
       if (reviewImages && reviewImages.length > 0) {
         reviewImages.forEach((image, index) => {
-          formData.append('images', image);
-          console.log(`  - 리뷰 이미지 ${index + 1} 추가:`, image.name);
+          formData.append("images", image);
         });
       }
 
       // JSON을 Blob으로 감싸서 Content-Type을 application/json으로 설정
-      const reviewBlob = new Blob([JSON.stringify(reviewJson)], { 
-        type: 'application/json' 
+      const reviewBlob = new Blob([JSON.stringify(reviewJson)], {
+        type: "application/json",
       });
-      formData.append('review', reviewBlob);
+      formData.append("review", reviewBlob);
 
       // FormData 내용 디버깅
-      console.log("📋 FormData 내용:");
       let imageCount = 0;
       for (let [key, value] of formData.entries()) {
-        if (key === 'images') {
+        if (key === "images") {
           imageCount++;
-          console.log(`  - ${key}[${imageCount}]:`, value);
-        } else {
-          console.log(`  - ${key}:`, value);
         }
       }
-      console.log("  - 총 이미지 개수:", imageCount);
-      console.log("  - 리뷰 이미지 개수:", reviewImages?.length || 0);
-      console.log("  - 증명 이미지:", proofImage ? "있음" : "없음");
-      console.log("  - 리뷰 JSON:", reviewJson);
 
       // 인증 토큰 가져오기
-      const token = sessionStorage.getItem('accessToken');
+      const token = sessionStorage.getItem("accessToken");
       if (!token) {
         alert("로그인이 필요합니다.");
         return;
       }
 
-      console.log("📤 서버로 전송 중...");
-
       // API 호출
-      const response = await fetch('/api/reviews/create', {
-        method: 'POST',
+      const response = await fetch("/api/reviews/create", {
+        method: "POST",
         headers: {
-          'Authorization': `Bearer ${token}`
+          Authorization: `Bearer ${token}`,
         },
-        body: formData
+        body: formData,
       });
 
       if (response.ok) {
-        console.log("✅ 리뷰 등록 성공!");
-        console.log("응답 상태:", response.status);
-        console.log("응답 헤더:", response.headers);
-        
         // 응답 본문이 있다면 확인
         const responseText = await response.text();
-        console.log("응답 본문:", responseText);
-        
+
         alert("리뷰가 성공적으로 등록되었습니다!");
         // 약간의 지연을 주어 서버의 트랜잭션이 완료되도록 함
         setTimeout(() => {
@@ -89,7 +69,7 @@ export default function CreateReviewButton() {
       } else {
         const errorData = await response.json();
         console.error("❌ 서버 응답 오류:", errorData);
-        alert(`리뷰 등록에 실패했습니다: ${errorData.error || '알 수 없는 오류'}`);
+        alert(`리뷰 등록에 실패했습니다: ${errorData.error || "알 수 없는 오류"}`);
       }
     } catch (error) {
       console.error("💥 리뷰 등록 실패:", error);

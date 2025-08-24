@@ -38,26 +38,18 @@ export interface AllRouteInfo {
  */
 export const isKakaoMapLoaded = (): boolean => {
   if (isKakaoMapInitialized) return true;
-  
+
   // 실제 서비스 사용 가능 여부 체크
-  const isLoaded = typeof window !== 'undefined' && 
-    window.kakao !== undefined && 
+  const isLoaded = typeof window !== 'undefined' &&
+    window.kakao !== undefined &&
     window.kakao.maps !== undefined &&
     window.kakao.maps.services !== undefined;
-  
+
   if (isLoaded) {
-    console.log('카카오맵 API 기본 서비스 사용 가능 확인됨');
-    
-    // 서비스 상태 로깅 (디버깅용)
-    if (window.kakao.maps.services.Places) {
-      console.log('Places 서비스 사용 가능');
-    } else {
-      console.log('Places 서비스 사용 불가');
-    }
-    
+
     isKakaoMapInitialized = true;
   }
-  
+
   return isLoaded;
 };
 
@@ -68,56 +60,46 @@ export const isKakaoMapLoaded = (): boolean => {
 export const loadKakaoMapAPI = (): Promise<void> => {
   // 이미 초기화된 경우 바로 resolved 상태의 Promise 반환
   if (isKakaoMapLoaded()) {
-    console.log('카카오맵 API가 이미 초기화되어 있습니다.');
     return Promise.resolve();
   }
-  
+
   // 이미 로드 중인 경우 해당 Promise 반환
   if (kakaoMapLoadPromise) {
-    console.log('카카오맵 API 로드가 이미 진행 중입니다.');
     return kakaoMapLoadPromise;
   }
-  
-  console.log('카카오맵 API 로드 시작 (새 로드)');
-  
+
   // 기존 스크립트 제거 (충돌 방지)
   const existingScript = document.querySelector('script[src*="dapi.kakao.com/v2/maps/sdk.js"]');
   if (existingScript) {
-    console.log('기존 카카오맵 스크립트 제거');
     existingScript.remove();
   }
-  
+
   // 새로운 로드 작업 시작
   kakaoMapLoadPromise = new Promise<void>((resolve, reject) => {
     try {
       // 새로운 스크립트 요소 생성
-      console.log('카카오맵 스크립트 생성 및 DOM에 추가');
       const script = document.createElement('script');
       script.async = true;
       script.defer = true;
-      
+
       // 라이브러리 명시적 포함 (순서 중요: services를 맨 앞에)
       // autoload를 false로 설정하여 명시적으로 로드하도록 함
       script.src = `//dapi.kakao.com/v2/maps/sdk.js?appkey=${process.env.NEXT_PUBLIC_KAKAO_MAP_API_KEY}&libraries=services,clusterer,drawing&autoload=false`;
-      
+
       // 최대 대기 시간 설정 (10초)
       const timeoutId = setTimeout(() => {
-        console.log('카카오맵 API 초기화 타임아웃 - 기본 서비스 사용 간주');
         isKakaoMapInitialized = true;
         resolve();
       }, 10000);
-      
+
       script.onload = () => {
-        console.log('카카오맵 스크립트 로드 완료, 초기화 시작');
-        
         if (window.kakao && window.kakao.maps) {
           window.kakao.maps.load(() => {
             // 타임아웃 취소
             clearTimeout(timeoutId);
-            
+
             // 기본 maps 객체 확인으로 간소화
             if (window.kakao.maps.services) {
-              console.log('카카오맵 API 초기화 성공');
               isKakaoMapInitialized = true;
               resolve();
             } else {
@@ -134,7 +116,7 @@ export const loadKakaoMapAPI = (): Promise<void> => {
           resolve(); // 오류가 있어도 앱은 계속 진행되도록 reject 대신 resolve 호출
         }
       };
-      
+
       script.onerror = (error) => {
         // 타임아웃 취소
         clearTimeout(timeoutId);
@@ -143,7 +125,7 @@ export const loadKakaoMapAPI = (): Promise<void> => {
         isKakaoMapInitialized = true; // 오류 발생해도 초기화 완료로 간주
         resolve(); // 오류가 있어도 앱은 계속 진행되도록 reject 대신 resolve 호출
       };
-      
+
       document.head.appendChild(script);
     } catch (error) {
       console.error('카카오맵 API 로드 중 예외 발생:', error);
@@ -157,7 +139,7 @@ export const loadKakaoMapAPI = (): Promise<void> => {
     isKakaoMapInitialized = true; // 최종 캐치 지점에서도 초기화 완료로 간주
     return Promise.resolve(); // 항상 resolved Promise 반환
   });
-  
+
   return kakaoMapLoadPromise;
 };
 
@@ -169,7 +151,7 @@ export const loadKakaoMapAPI = (): Promise<void> => {
 export const formatDuration = (seconds: number): string => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
-  
+
   if (hours > 0) {
     return `${hours}시간 ${minutes > 0 ? `${minutes}분` : ''}`;
   }
@@ -197,22 +179,22 @@ export const formatDistance = (meters: number): string => {
 export const getCarRoute = async (origin: string, destination: string): Promise<RouteInfo> => {
   // API 로드 확인
   await loadKakaoMapAPI();
-  
+
   // API 객체 확인
   if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
     throw new Error('카카오맵 API가 로드되지 않았습니다.');
   }
-  
+
   // Directions 서비스가 없는 경우 대체 계산 사용
   if (typeof window.kakao.maps.services.Directions !== 'function') {
     console.warn('Directions 서비스를 사용할 수 없어 예상 시간으로 대체합니다.');
     return estimateRouteTime(origin, destination, 'DRIVING');
   }
-  
+
   return new Promise((resolve, reject) => {
     try {
       const directions = new window.kakao.maps.services.Directions();
-      
+
       // 주소와 좌표 구분
       const formatPoint = (point: string) => {
         if (point.includes(',')) {
@@ -221,7 +203,7 @@ export const getCarRoute = async (origin: string, destination: string): Promise<
         }
         return point;
       };
-      
+
       directions.route({
         origin: formatPoint(origin),
         destination: formatPoint(destination),
@@ -230,10 +212,10 @@ export const getCarRoute = async (origin: string, destination: string): Promise<
         if (status === window.kakao.maps.services.Status.OK) {
           const route = result.routes[0];
           const path = route.result.path[0];
-          
+
           const distance = path.distance; // 미터 단위
           const duration = path.duration; // 초 단위
-          
+
           resolve({
             distance,
             duration,
@@ -261,22 +243,22 @@ export const getCarRoute = async (origin: string, destination: string): Promise<
 export const getTransitRoute = async (origin: string, destination: string): Promise<RouteInfo> => {
   // API 로드 확인
   await loadKakaoMapAPI();
-  
+
   // API 객체 확인
   if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
     throw new Error('카카오맵 API가 로드되지 않았습니다.');
   }
-  
+
   // Directions 서비스가 없는 경우 대체 계산 사용
   if (typeof window.kakao.maps.services.Directions !== 'function') {
     console.warn('Directions 서비스를 사용할 수 없어 예상 시간으로 대체합니다.');
     return estimateRouteTime(origin, destination, 'TRANSIT');
   }
-  
+
   return new Promise((resolve, reject) => {
     try {
       const directions = new window.kakao.maps.services.Directions();
-      
+
       // 주소와 좌표 구분
       const formatPoint = (point: string) => {
         if (point.includes(',')) {
@@ -285,7 +267,7 @@ export const getTransitRoute = async (origin: string, destination: string): Prom
         }
         return point;
       };
-      
+
       directions.route({
         origin: formatPoint(origin),
         destination: formatPoint(destination),
@@ -294,10 +276,10 @@ export const getTransitRoute = async (origin: string, destination: string): Prom
         if (status === window.kakao.maps.services.Status.OK) {
           const route = result.routes[0];
           const path = route.result.path[0];
-          
+
           const distance = path.distance; // 미터 단위
           const duration = path.duration; // 초 단위
-          
+
           resolve({
             distance,
             duration,
@@ -325,22 +307,22 @@ export const getTransitRoute = async (origin: string, destination: string): Prom
 export const getWalkingRoute = async (origin: string, destination: string): Promise<RouteInfo> => {
   // API 로드 확인
   await loadKakaoMapAPI();
-  
+
   // API 객체 확인
   if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
     throw new Error('카카오맵 API가 로드되지 않았습니다.');
   }
-  
+
   // Directions 서비스가 없는 경우 대체 계산 사용
   if (typeof window.kakao.maps.services.Directions !== 'function') {
     console.warn('Directions 서비스를 사용할 수 없어 예상 시간으로 대체합니다.');
     return estimateRouteTime(origin, destination, 'WALKING');
   }
-  
+
   return new Promise((resolve, reject) => {
     try {
       const directions = new window.kakao.maps.services.Directions();
-      
+
       // 주소와 좌표 구분
       const formatPoint = (point: string) => {
         if (point.includes(',')) {
@@ -349,7 +331,7 @@ export const getWalkingRoute = async (origin: string, destination: string): Prom
         }
         return point;
       };
-      
+
       directions.route({
         origin: formatPoint(origin),
         destination: formatPoint(destination),
@@ -358,10 +340,10 @@ export const getWalkingRoute = async (origin: string, destination: string): Prom
         if (status === window.kakao.maps.services.Status.OK) {
           const route = result.routes[0];
           const path = route.result.path[0];
-          
+
           const distance = path.distance; // 미터 단위
           const duration = path.duration; // 초 단위
-          
+
           resolve({
             distance,
             duration,
@@ -390,7 +372,7 @@ function estimateRouteTime(origin: string, destination: string, mode: 'DRIVING' 
       // Places 서비스를 사용하여 두 지점의 좌표를 구함
       let originCoords: { x: number, y: number };
       let destCoords: { x: number, y: number };
-      
+
       if (origin.includes(',')) {
         const [lat, lng] = origin.split(',').map(Number);
         originCoords = { y: lat, x: lng };
@@ -403,7 +385,7 @@ function estimateRouteTime(origin: string, destination: string, mode: 'DRIVING' 
           originCoords = { x: 126.978, y: 37.566 };
         }
       }
-      
+
       if (destination.includes(',')) {
         const [lat, lng] = destination.split(',').map(Number);
         destCoords = { y: lat, x: lng };
@@ -416,42 +398,42 @@ function estimateRouteTime(origin: string, destination: string, mode: 'DRIVING' 
           destCoords = { x: 126.977, y: 37.579 };
         }
       }
-      
+
       // 직선 거리 계산 (하버사인 공식)
       const R = 6371000; // 지구 반경 (미터)
       const dLat = (destCoords.y - originCoords.y) * Math.PI / 180;
       const dLon = (destCoords.x - originCoords.x) * Math.PI / 180;
-      const a = 
-        Math.sin(dLat/2) * Math.sin(dLat/2) +
-        Math.cos(originCoords.y * Math.PI / 180) * Math.cos(destCoords.y * Math.PI / 180) * 
-        Math.sin(dLon/2) * Math.sin(dLon/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-      
+      const a =
+        Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+        Math.cos(originCoords.y * Math.PI / 180) * Math.cos(destCoords.y * Math.PI / 180) *
+        Math.sin(dLon / 2) * Math.sin(dLon / 2);
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+
       // 직선 거리 (미터)
       const distance = R * c;
-      
+
       // 실제 도로 거리는 직선 거리보다 약 1.3~1.5배 길다고 가정
       const roadFactor = 1.4;
       const roadDistance = distance * roadFactor;
-      
+
       // 이동 수단별 속도 (미터/초)
       let speed = 13.9; // 자동차 기본 (50km/h)
-      
+
       switch (mode) {
         case 'DRIVING':
           speed = 13.9; // 50km/h
           break;
-        case 'TRANSIT': 
+        case 'TRANSIT':
           speed = 8.3;  // 30km/h
           break;
         case 'WALKING':
           speed = 1.4;  // 5km/h
           break;
       }
-      
+
       // 이동 시간 계산 (초)
       const duration = Math.round(roadDistance / speed);
-      
+
       resolve({
         distance: Math.round(roadDistance),
         duration,
@@ -460,23 +442,23 @@ function estimateRouteTime(origin: string, destination: string, mode: 'DRIVING' 
       });
     } catch (error) {
       console.error('예상 시간 계산 오류:', error);
-      
+
       // 오류 발생 시 기본값 사용
       const defaultDistance = 5000; // 5km
       let defaultDuration = 600; // 10분
-      
+
       switch (mode) {
         case 'DRIVING':
           defaultDuration = 600; // 10분
           break;
-        case 'TRANSIT': 
+        case 'TRANSIT':
           defaultDuration = 900; // 15분
           break;
         case 'WALKING':
           defaultDuration = 3600; // 60분
           break;
       }
-      
+
       resolve({
         distance: defaultDistance,
         duration: defaultDuration,
@@ -496,29 +478,29 @@ function estimateRouteTime(origin: string, destination: string, mode: 'DRIVING' 
 export const getAllRoutes = async (origin: string, destination: string): Promise<AllRouteInfo> => {
   try {
     const result: AllRouteInfo = {};
-    
+
     try {
       result.driving = await getCarRoute(origin, destination);
     } catch (error) {
       console.warn('자동차 경로 계산 실패:', error);
     }
-    
+
     try {
       result.transit = await getTransitRoute(origin, destination);
     } catch (error) {
       console.warn('대중교통 경로 계산 실패:', error);
     }
-    
+
     try {
       result.walking = await getWalkingRoute(origin, destination);
     } catch (error) {
       console.warn('도보 경로 계산 실패:', error);
     }
-    
+
     if (!result.driving && !result.transit && !result.walking) {
       result.error = '모든 이동 수단에 대한 경로 계산에 실패했습니다.';
     }
-    
+
     return result;
   } catch (error) {
     console.error('경로 계산 오류:', error);
@@ -542,13 +524,13 @@ const getKakaoService = (serviceName: string): any => {
     console.warn(`카카오맵 services 객체 없음 (${serviceName} 요청)`);
     return null;
   }
-  
+
   const service = window.kakao.maps.services[serviceName];
   if (typeof service !== 'function') {
     console.warn(`카카오맵 ${serviceName} 서비스 사용 불가`);
     return null;
   }
-  
+
   return service;
 };
 
@@ -557,28 +539,26 @@ const getKakaoService = (serviceName: string): any => {
  * @param address 주소 또는 장소명
  * @returns 좌표 정보를 담은 Promise
  */
-export const geocodeAddress = async (address: string): Promise<{x: string, y: string}> => {
+export const geocodeAddress = async (address: string): Promise<{ x: string, y: string }> => {
   try {
     await loadKakaoMapAPI();
-    
+
     // 카카오맵 API가 제대로 로드되었는지 확인
     if (!window.kakao || !window.kakao.maps || !window.kakao.maps.services) {
       console.warn('카카오맵 API services 객체가 없습니다. 기본 좌표를 반환합니다.');
       return { x: '126.978', y: '37.566' }; // 서울시청 좌표
     }
-    
+
     return new Promise((resolve, reject) => {
       try {
         // tryGeocoder 함수를 미리 정의 (함수 표현식 사용)
         const tryGeocoder = () => {
           const Geocoder = getKakaoService('Geocoder');
           if (Geocoder) {
-            console.log('Geocoder 서비스로 검색 시도');
             const geocoder = new Geocoder();
-            
+
             geocoder.addressSearch(address, (result: any, status: any) => {
               if (status === window.kakao.maps.services.Status.OK) {
-                console.log('Geocoder 서비스 검색 성공');
                 resolve({
                   x: result[0].x, // 경도
                   y: result[0].y  // 위도
@@ -593,16 +573,14 @@ export const geocodeAddress = async (address: string): Promise<{x: string, y: st
             resolve({ x: '126.978', y: '37.566' }); // 서울시청 좌표
           }
         };
-        
+
         // Places 서비스 먼저 시도
         const Places = getKakaoService('Places');
         if (Places) {
-          console.log('Places 서비스로 검색 시도');
           const places = new Places();
-          
+
           places.keywordSearch(address, (result: any, status: any) => {
             if (status === window.kakao.maps.services.Status.OK && result.length > 0) {
-              console.log('Places 서비스 검색 성공');
               resolve({
                 x: result[0].x, // 경도
                 y: result[0].y  // 위도
@@ -614,7 +592,7 @@ export const geocodeAddress = async (address: string): Promise<{x: string, y: st
           });
           return;
         }
-        
+
         // Places 없으면 Geocoder 시도
         tryGeocoder();
       } catch (error) {

@@ -22,7 +22,6 @@ export const destinationApi = {
       { contentIdList: contentIds },
       { withCredentials: true }
     );
-    console.log('des date', res.data.data);
     return res.data.data;
 
   },

@@ -29,7 +29,6 @@ export default function ReviewsSection() {
       setLoading(true);
       setError(null);
 
-      console.log("리뷰 데이터 가져오기 시작");
       const data = await getReviews({ page: 0, size: 3 });
 
       if (!data || data.content.length === 0) {
@@ -46,7 +45,6 @@ export default function ReviewsSection() {
           empty: true,
         });
       } else {
-        console.log(`${data.content.length}개의 리뷰를 가져왔습니다`);
         setReviewsData(data);
       }
     } catch (error) {

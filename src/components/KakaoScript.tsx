@@ -1,12 +1,12 @@
-'use client'
+"use client";
 
-import Script from 'next/script'
+import Script from "next/script";
 
 // Kakao 타입 정의
 type KakaoType = {
   init: (apiKey: string) => void;
   isInitialized: () => boolean;
-}
+};
 
 export default function KakaoScript() {
   return (
@@ -15,14 +15,13 @@ export default function KakaoScript() {
       strategy="afterInteractive"
       onLoad={() => {
         // Kakao SDK 초기화
-        const kakao = (window as {Kakao?: KakaoType}).Kakao;
+        const kakao = (window as { Kakao?: KakaoType }).Kakao;
         if (kakao) {
           if (!kakao.isInitialized()) {
-            kakao.init(process.env.NEXT_PUBLIC_KAKAO_APP_KEY || '');
-            console.log('카카오 SDK 초기화 완료:', kakao.isInitialized());
+            kakao.init(process.env.NEXT_PUBLIC_KAKAO_APP_KEY || "");
           }
         }
       }}
     />
   );
-} 
+}

@@ -60,8 +60,6 @@ export default function Info() {
   }, [reset]);
 
   const onSubmit = (data: FormData) => {
-    console.log("입력 데이터:", data);
-    console.log("선택된 이미지:", imageFile);
     // 서버 전송 로직 추가 가능
   };
 

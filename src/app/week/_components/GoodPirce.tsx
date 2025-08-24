@@ -9,7 +9,6 @@ interface Props {
 }
 
 export default function GoodPrice({ area, areaBasedList }: Props) {
-  console.log(areaBasedList);
   // 카카오맵 URL 생성기
   const getKakaoMapsUrl = (address: string) => {
     return `https://map.kakao.com/link/search/${encodeURIComponent(address)}`;

@@ -57,8 +57,8 @@ import NavSection from "@/components/common/NavSection";
 import Footer from "@/components/common/Footer";
 import Link from "next/link";
 import NextImage from "next/image";
-import { getBestTravelSeason, getShortTermForecast, SeasonalInfo, WeatherData } from '@/services/weatherService';
-import { courseApi } from '@/services/courseService';
+import { getBestTravelSeason, getShortTermForecast, SeasonalInfo, WeatherData } from "@/services/weatherService";
+import { courseApi } from "@/services/courseService";
 
 // API 응답 타입 정의
 interface CourseDetail {
@@ -121,7 +121,7 @@ export default function TravelCourseDetail() {
   const [weatherInfo, setWeatherInfo] = useState<WeatherInfo>({
     isLoading: true,
     seasonalInfo: null,
-    forecast: []
+    forecast: [],
   });
 
   // 데이터 로드
@@ -129,64 +129,63 @@ export default function TravelCourseDetail() {
     const fetchCourseDetail = async () => {
       try {
         setIsLoading(true);
-        
+
         // API 호출 상태 확인을 위한 로깅 추가
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://3.34.52.239:8080';
-        console.log(`코스 데이터 요청 시작: ${baseUrl}/api/course/${courseId}`);
-        
+        const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://3.34.52.239:8080";
+
         // 백엔드 서버로 직접 API 호출
         const response = await fetch(`${baseUrl}/api/course/${courseId}`, {
           mode: "cors",
           headers: {
-            'Accept': 'application/json'
+            Accept: "application/json",
           },
-          cache: 'no-store'
+          cache: "no-store",
         });
-        
+
         if (!response.ok) {
           console.error(`API 오류: ${response.status} - ${response.statusText}`);
-          throw new Error('코스 상세 정보를 불러오는 중 오류가 발생했습니다');
+          throw new Error("코스 상세 정보를 불러오는 중 오류가 발생했습니다");
         }
-        
+
         // 응답 내용 확인
         const responseText = await response.text();
-        
+
         let data;
         try {
           data = JSON.parse(responseText);
         } catch (parseError) {
-          console.error('JSON 파싱 오류:', parseError);
-          console.error('서버 응답:', responseText.substring(0, 200) + '...');
-          throw new Error('서버 응답이 유효한 JSON 형식이 아닙니다');
+          console.error("JSON 파싱 오류:", parseError);
+          console.error("서버 응답:", responseText.substring(0, 200) + "...");
+          throw new Error("서버 응답이 유효한 JSON 형식이 아닙니다");
         }
-        
+
         // 데이터 가공 - 스팟에 가상의 day, timeSlot 등 추가
         const processedSpots = data.spots.map((spot: SpotDetail, index: number) => {
           // 임시로 day와 timeSlot 할당 (실제로는 API에서 제공되지 않을 수 있음)
           const day = Math.floor(index / 3) + 1;
-          
+
           let timeSlot: "오전" | "오후" | "저녁";
           if (index % 3 === 0) timeSlot = "오전";
           else if (index % 3 === 1) timeSlot = "오후";
           else timeSlot = "저녁";
-          
+
           const category = index % 3 === 2 ? "restaurant" : "attraction";
           const visitDuration = "약 2시간";
-          
+
           return {
             ...spot,
             day,
             timeSlot,
             category,
-            visitDuration
+            visitDuration,
           };
         });
-        
+
         const processedData = {
           ...data,
-          spots: processedSpots
+          spots: processedSpots,
         };
-        
+
         setCourseDetail(processedData);
         setIsLoading(false);
       } catch (err) {
@@ -205,7 +204,7 @@ export default function TravelCourseDetail() {
     const init = async () => {
       try {
         if (!courseId) return;
-        const token = typeof window !== 'undefined' ? sessionStorage.getItem('accessToken') : null;
+        const token = typeof window !== "undefined" ? sessionStorage.getItem("accessToken") : null;
         if (!token) return;
         const liked = await courseApi.isLiked(courseId);
         setIsLiked(liked);
@@ -220,58 +219,40 @@ export default function TravelCourseDetail() {
   useEffect(() => {
     const loadWeatherData = async () => {
       if (!courseDetail) return;
-      
+
       try {
         // 첫 번째 장소의 주소로 지역 판단
         const firstSpot = courseDetail.spots[0];
         if (!firstSpot || !firstSpot.address) {
-          console.error('여행지 주소 정보가 없습니다.');
-          setWeatherInfo(prev => ({ ...prev, isLoading: false }));
+          console.error("여행지 주소 정보가 없습니다.");
+          setWeatherInfo((prev) => ({ ...prev, isLoading: false }));
           return;
         }
-        
-        const addressParts = firstSpot.address.split(' ');
+
+        const addressParts = firstSpot.address.split(" ");
         // 시/도 + 시/군/구 조합으로 더 정확한 지역명 구성
-        const regionName = addressParts.length >= 2 
-          ? `${addressParts[0]} ${addressParts[1]}` 
-          : addressParts[0];
-        
-        console.log(`날씨 조회를 위한 지역명: "${regionName}"`);
-        
+        const regionName = addressParts.length >= 2 ? `${addressParts[0]} ${addressParts[1]}` : addressParts[0];
+
         // 계절 정보 가져오기
-        const seasonalInfo = getBestTravelSeason(
-          `${firstSpot.address} ${courseDetail.title}`, 
-          courseDetail.overview
-        );
-        
-        console.log(`계절 정보 결과:`, seasonalInfo);
-        
+        const seasonalInfo = getBestTravelSeason(`${firstSpot.address} ${courseDetail.title}`, courseDetail.overview);
+
         // 날씨 예보 가져오기 (실패해도 계속 진행)
         let forecast: WeatherData[] = [];
         try {
-          console.log(`${regionName} 지역의 날씨 예보 요청 중...`);
           forecast = await getShortTermForecast(regionName);
-          
-          if (forecast.length > 0) {
-            console.log(`날씨 예보 데이터 수신 완료: ${forecast.length}개 항목`);
-            console.log(`현재/가장 빠른 예보: ${forecast[0].sky}, ${forecast[0].tmp}°C, 강수확률 ${forecast[0].pop}%`);
-          } else {
-            console.warn('받아온 날씨 예보 데이터가 없습니다.');
-          }
         } catch (forecastError) {
-          console.error('날씨 예보 가져오기 실패:', forecastError);
+          console.error("날씨 예보 가져오기 실패:", forecastError);
         }
-        
+
         // 결과 설정
         setWeatherInfo({
           isLoading: false,
           seasonalInfo,
-          forecast
+          forecast,
         });
-        
       } catch (error) {
-        console.error('날씨 정보 로드 실패:', error);
-        setWeatherInfo(prev => ({ ...prev, isLoading: false }));
+        console.error("날씨 정보 로드 실패:", error);
+        setWeatherInfo((prev) => ({ ...prev, isLoading: false }));
       }
     };
 
@@ -399,8 +380,8 @@ export default function TravelCourseDetail() {
   };
 
   const handleLikeToggle = async () => {
-    if (typeof window !== 'undefined' && !sessionStorage.getItem('accessToken')) {
-      alert('로그인이 필요합니다.');
+    if (typeof window !== "undefined" && !sessionStorage.getItem("accessToken")) {
+      alert("로그인이 필요합니다.");
       return;
     }
     try {
@@ -412,7 +393,7 @@ export default function TravelCourseDetail() {
         setIsLiked(true);
       }
     } catch (e) {
-      alert('찜하기 처리 중 오류가 발생했습니다.');
+      alert("찜하기 처리 중 오류가 발생했습니다.");
     }
   };
 
@@ -513,8 +494,8 @@ export default function TravelCourseDetail() {
   const rating = 4.7;
   const reviewCount = 120;
 
-  const recommendedTimes = weatherInfo.seasonalInfo 
-    ? `${weatherInfo.seasonalInfo.months}에 방문 추천` 
+  const recommendedTimes = weatherInfo.seasonalInfo
+    ? `${weatherInfo.seasonalInfo.months}에 방문 추천`
     : "오전 10시~오후 2시 방문 추천";
 
   return (
@@ -894,8 +875,8 @@ export default function TravelCourseDetail() {
             {/* 찜하기 버튼 */}
             <Flex justify="center" align="center" mt={2}>
               <IconButton
-                aria-label={isLiked ? '찜 해제' : '찜하기'}
-                icon={<Icon as={isLiked ? FaHeart : FaRegHeart} color={isLiked ? 'pink.500' : 'gray.500'} />}
+                aria-label={isLiked ? "찜 해제" : "찜하기"}
+                icon={<Icon as={isLiked ? FaHeart : FaRegHeart} color={isLiked ? "pink.500" : "gray.500"} />}
                 onClick={handleLikeToggle}
                 variant="ghost"
                 size="lg"
@@ -973,11 +954,11 @@ export default function TravelCourseDetail() {
                     onMouseMove={(e) => handleCardMouseMove(e, spot.contentId)}
                     onMouseLeave={() => handleCardMouseLeave(spot.contentId)}
                     sx={{
-                      backgroundColor: !spot.imageUrl ? '#f5f5f5' : undefined,
-                      display: 'flex',
-                      alignItems: !spot.imageUrl ? 'center' : undefined,
-                      justifyContent: !spot.imageUrl ? 'center' : undefined,
-                      overflow: 'hidden',
+                      backgroundColor: !spot.imageUrl ? "#f5f5f5" : undefined,
+                      display: "flex",
+                      alignItems: !spot.imageUrl ? "center" : undefined,
+                      justifyContent: !spot.imageUrl ? "center" : undefined,
+                      overflow: "hidden",
                     }}
                   >
                     {/* 이미지가 있는 경우 Next.js Image 컴포넌트 사용 */}
@@ -985,16 +966,16 @@ export default function TravelCourseDetail() {
                       <Box position="absolute" top="0" left="0" width="100%" height="100%" overflow="hidden">
                         <NextImage
                           src={spot.imageUrl}
-                          alt={spot.title || '관광 명소 이미지'}
+                          alt={spot.title || "관광 명소 이미지"}
                           width={800}
                           height={600}
                           sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                           style={{
-                            objectFit: 'cover',
-                            objectPosition: 'center',
-                            width: '100%',
-                            height: '100%',
-                            transition: 'transform 0.3s ease',
+                            objectFit: "cover",
+                            objectPosition: "center",
+                            width: "100%",
+                            height: "100%",
+                            transition: "transform 0.3s ease",
                           }}
                           quality={100}
                           priority={index < 6}
@@ -1002,30 +983,29 @@ export default function TravelCourseDetail() {
                       </Box>
                     ) : (
                       /* 이미지가 없는 경우 적절한 아이콘 표시 */
-                      <Flex
-                        direction="column"
-                        align="center"
-                        justify="center"
-                        height="100%"
-                        width="100%"
-                        p={4}
-                      >
-                        <Icon 
+                      <Flex direction="column" align="center" justify="center" height="100%" width="100%" p={4}>
+                        <Icon
                           as={
-                            spot.title?.includes('박물관') || spot.title?.includes('전시관') || spot.title?.includes('기념관') ? 
-                              FaLandmark : 
-                            spot.title?.includes('공원') || spot.title?.includes('정원') ? 
-                              FaTree : 
-                            spot.title?.includes('사찰') || spot.title?.includes('절') || spot.title?.includes('성당') ? 
-                              FaPrayingHands : 
-                            spot.title?.includes('바다') || spot.title?.includes('해변') || spot.title?.includes('해수욕장') ? 
-                              FaWater : 
-                            spot.title?.includes('산') || spot.title?.includes('봉') ? 
-                              FaMountain : 
-                            FaMapMarkerAlt
-                          } 
-                          boxSize={16} 
-                          color="pink.400" 
+                            spot.title?.includes("박물관") ||
+                            spot.title?.includes("전시관") ||
+                            spot.title?.includes("기념관")
+                              ? FaLandmark
+                              : spot.title?.includes("공원") || spot.title?.includes("정원")
+                              ? FaTree
+                              : spot.title?.includes("사찰") ||
+                                spot.title?.includes("절") ||
+                                spot.title?.includes("성당")
+                              ? FaPrayingHands
+                              : spot.title?.includes("바다") ||
+                                spot.title?.includes("해변") ||
+                                spot.title?.includes("해수욕장")
+                              ? FaWater
+                              : spot.title?.includes("산") || spot.title?.includes("봉")
+                              ? FaMountain
+                              : FaMapMarkerAlt
+                          }
+                          boxSize={16}
+                          color="pink.400"
                           mb={4}
                           opacity={0.8}
                         />
@@ -1124,44 +1104,37 @@ export default function TravelCourseDetail() {
                 display="flex"
                 flexDirection="column"
               >
-                <Box 
-                  className="price-card-header" 
-                  bg="#8dd3c7" 
-                  pt={6} 
-                  pb={5} 
-                  px={3}
-                  height="155px"
-                >
+                <Box className="price-card-header" bg="#8dd3c7" pt={6} pb={5} px={3} height="155px">
                   <Heading size="md" mb={4}>
                     교통 정보
                   </Heading>
                   <Box className="price-card-price">
                     <Flex align="center" justify="center">
-                      <NextImage 
-                        src="/images/popular/cash.png" 
-                        alt="비용" 
-                        width={64} 
-                        height={64} 
+                      <NextImage
+                        src="/images/popular/cash.png"
+                        alt="비용"
+                        width={64}
+                        height={64}
                         quality={100}
-                        style={{ marginRight: '12px' }}
+                        style={{ marginRight: "12px" }}
                       />
                       <Text>
-                        {courseDetail.spots.some(spot => spot.address?.includes('섬') || spot.address?.includes('도')) 
-                          ? '80,000' 
-                          : courseDetail.spots.length > 4 
-                            ? (70000).toLocaleString() 
-                            : (50000).toLocaleString()}
+                        {courseDetail.spots.some((spot) => spot.address?.includes("섬") || spot.address?.includes("도"))
+                          ? "80,000"
+                          : courseDetail.spots.length > 4
+                          ? (70000).toLocaleString()
+                          : (50000).toLocaleString()}
                       </Text>
                     </Flex>
                   </Box>
                   <Text className="price-card-description">예상 교통비용</Text>
                 </Box>
 
-                <Box 
-                  className="price-card-body" 
-                  p={4} 
-                  flex="1" 
-                  display="flex" 
+                <Box
+                  className="price-card-body"
+                  p={4}
+                  flex="1"
+                  display="flex"
                   flexDirection="column"
                   justifyContent="space-between"
                   height="229px"
@@ -1174,7 +1147,9 @@ export default function TravelCourseDetail() {
                           렌터카
                         </Text>
                         <Text fontSize="sm" color="gray.500">
-                          {courseDetail.overview.includes('증도') ? '대교가 있어 차량 이동 가능' : '주요 관광지 자유롭게 이동'}
+                          {courseDetail.overview.includes("증도")
+                            ? "대교가 있어 차량 이동 가능"
+                            : "주요 관광지 자유롭게 이동"}
                         </Text>
                       </Box>
                     </Box>
@@ -1186,7 +1161,9 @@ export default function TravelCourseDetail() {
                           대중교통
                         </Text>
                         <Text fontSize="sm" color="gray.500">
-                          {courseDetail.spots.some(spot => spot.address?.includes('신안')) ? '버스 + 선박 조합 가능' : '버스 + 택시 이용 가능'}
+                          {courseDetail.spots.some((spot) => spot.address?.includes("신안"))
+                            ? "버스 + 선박 조합 가능"
+                            : "버스 + 택시 이용 가능"}
                         </Text>
                       </Box>
                     </Box>
@@ -1199,8 +1176,10 @@ export default function TravelCourseDetail() {
                         </Text>
                         <Text fontSize="sm" color="gray.500">
                           {courseDetail.spots.length > 0 && courseDetail.spots[0].address
-                            ? `${courseDetail.spots[0].address.split(' ')[0]} ${courseDetail.spots[0].address.split(' ')[1]} 위치`
-                            : '주변 공항/기차역에서 접근'}
+                            ? `${courseDetail.spots[0].address.split(" ")[0]} ${
+                                courseDetail.spots[0].address.split(" ")[1]
+                              } 위치`
+                            : "주변 공항/기차역에서 접근"}
                         </Text>
                       </Box>
                     </Box>
@@ -1218,42 +1197,37 @@ export default function TravelCourseDetail() {
                 display="flex"
                 flexDirection="column"
               >
-                <Box 
-                  className="price-card-header" 
-                  bg="#80b1d3" 
-                  pt={6} 
-                  pb={5} 
-                  px={3}
-                  height="155px"
-                >
+                <Box className="price-card-header" bg="#80b1d3" pt={6} pb={5} px={3} height="155px">
                   <Heading size="md" mb={4}>
                     예산 정보
                   </Heading>
                   <Box className="price-card-price">
                     <Flex align="center" justify="center">
-                      <NextImage 
-                        src="/images/popular/cash.png" 
-                        alt="비용" 
-                        width={64} 
-                        height={64} 
+                      <NextImage
+                        src="/images/popular/cash.png"
+                        alt="비용"
+                        width={64}
+                        height={64}
                         quality={100}
-                        style={{ marginRight: '12px' }}
+                        style={{ marginRight: "12px" }}
                       />
                       <Text>
                         {(() => {
                           // 지역 특성에 따른 계수
-                          const isExpensiveArea = courseDetail.spots.some(spot => 
-                            spot.address?.includes('서울') || 
-                            spot.address?.includes('제주') || 
-                            courseDetail.title?.includes('제주'));
-                          
+                          const isExpensiveArea = courseDetail.spots.some(
+                            (spot) =>
+                              spot.address?.includes("서울") ||
+                              spot.address?.includes("제주") ||
+                              courseDetail.title?.includes("제주")
+                          );
+
                           const spotCount = courseDetail.spots.length;
                           const days = Math.ceil(spotCount / 3);
-                          
+
                           // 기본 비용 = 숙박 + 식비 + 교통 + 입장료
                           const baseCost = isExpensiveArea ? 120000 : 80000;
                           const totalCost = baseCost * days * 1.5;
-                          
+
                           return Math.round(totalCost / 10000) * 10000; // 1만원 단위로 반올림
                         })().toLocaleString()}
                       </Text>
@@ -1262,11 +1236,11 @@ export default function TravelCourseDetail() {
                   <Text className="price-card-description">1인 기준 총 비용</Text>
                 </Box>
 
-                <Box 
-                  className="price-card-body" 
-                  p={4} 
-                  flex="1" 
-                  display="flex" 
+                <Box
+                  className="price-card-body"
+                  p={4}
+                  flex="1"
+                  display="flex"
                   flexDirection="column"
                   justifyContent="space-between"
                   height="229px"
@@ -1281,11 +1255,13 @@ export default function TravelCourseDetail() {
                         <Text fontSize="sm" color="gray.500">
                           {(() => {
                             const days = Math.ceil(courseDetail.spots.length / 3);
-                            const isExpensiveArea = courseDetail.spots.some(spot => 
-                              spot.address?.includes('서울') || 
-                              spot.address?.includes('제주') || 
-                              courseDetail.title?.includes('제주'));
-                              
+                            const isExpensiveArea = courseDetail.spots.some(
+                              (spot) =>
+                                spot.address?.includes("서울") ||
+                                spot.address?.includes("제주") ||
+                                courseDetail.title?.includes("제주")
+                            );
+
                             const dailyRate = isExpensiveArea ? 120000 : 80000;
                             return `${days}박 평균 ${(days * dailyRate).toLocaleString()}원`;
                           })()}
@@ -1302,11 +1278,13 @@ export default function TravelCourseDetail() {
                         <Text fontSize="sm" color="gray.500">
                           {(() => {
                             const days = Math.ceil(courseDetail.spots.length / 3);
-                            const isExpensiveArea = courseDetail.spots.some(spot => 
-                              spot.address?.includes('서울') || 
-                              spot.address?.includes('제주') || 
-                              courseDetail.title?.includes('제주'));
-                              
+                            const isExpensiveArea = courseDetail.spots.some(
+                              (spot) =>
+                                spot.address?.includes("서울") ||
+                                spot.address?.includes("제주") ||
+                                courseDetail.title?.includes("제주")
+                            );
+
                             const mealRate = isExpensiveArea ? 15000 : 12000;
                             const totalMealCost = days * 3 * mealRate; // 하루 3끼 기준
                             return `하루 평균 ${(totalMealCost / days).toLocaleString()}원`;
@@ -1324,14 +1302,16 @@ export default function TravelCourseDetail() {
                         <Text fontSize="sm" color="gray.500">
                           {(() => {
                             // 명소별 입장료 계산
-                            const avgTicketPrice = courseDetail.spots.some(spot => 
-                              spot.title?.includes('박물관') || 
-                              spot.title?.includes('미술관') || 
-                              spot.title?.includes('테마파크') || 
-                              spot.title?.includes('랜드'))
-                              ? 15000 
+                            const avgTicketPrice = courseDetail.spots.some(
+                              (spot) =>
+                                spot.title?.includes("박물관") ||
+                                spot.title?.includes("미술관") ||
+                                spot.title?.includes("테마파크") ||
+                                spot.title?.includes("랜드")
+                            )
+                              ? 15000
                               : 8000;
-                              
+
                             const totalTickets = Math.min(courseDetail.spots.length, 5); // 최대 5곳 방문 가정
                             return `주요 명소 약 ${(totalTickets * avgTicketPrice).toLocaleString()}원`;
                           })()}
@@ -1352,46 +1332,43 @@ export default function TravelCourseDetail() {
                 display="flex"
                 flexDirection="column"
               >
-                <Box 
-                  className="price-card-header" 
-                  bg="#fb8072" 
-                  pt={6} 
-                  pb={5} 
-                  px={3}
-                  height="155px"
-                >
+                <Box className="price-card-header" bg="#fb8072" pt={6} pb={5} px={3} height="155px">
                   <Heading size="md" mb={4}>
                     추천 시기
                   </Heading>
                   <Box className="price-card-price">
                     <Flex align="center" justify="center">
-                      <NextImage 
-                        src="/images/popular/Weather.png" 
-                        alt="날씨" 
-                        width={64} 
+                      <NextImage
+                        src="/images/popular/Weather.png"
+                        alt="날씨"
+                        width={64}
                         height={64}
                         quality={100}
-                        style={{ marginRight: '12px' }}
+                        style={{ marginRight: "12px" }}
                       />
                       <Text>
-                        {weatherInfo.seasonalInfo ? weatherInfo.seasonalInfo.bestSeason : 
-                         courseDetail.overview.includes('해변') || courseDetail.overview.includes('바다') 
-                         ? '여름' : '봄/가을'}
+                        {weatherInfo.seasonalInfo
+                          ? weatherInfo.seasonalInfo.bestSeason
+                          : courseDetail.overview.includes("해변") || courseDetail.overview.includes("바다")
+                          ? "여름"
+                          : "봄/가을"}
                       </Text>
                     </Flex>
                   </Box>
                   <Text className="price-card-description">
-                    {weatherInfo.seasonalInfo ? weatherInfo.seasonalInfo.months : 
-                     courseDetail.overview.includes('해변') || courseDetail.overview.includes('바다') 
-                     ? '6-8월 추천' : '3-5월, 9-10월 추천'}
+                    {weatherInfo.seasonalInfo
+                      ? weatherInfo.seasonalInfo.months
+                      : courseDetail.overview.includes("해변") || courseDetail.overview.includes("바다")
+                      ? "6-8월 추천"
+                      : "3-5월, 9-10월 추천"}
                   </Text>
                 </Box>
 
-                <Box 
-                  className="price-card-body" 
-                  p={4} 
-                  flex="1" 
-                  display="flex" 
+                <Box
+                  className="price-card-body"
+                  p={4}
+                  flex="1"
+                  display="flex"
                   flexDirection="column"
                   justifyContent="space-between"
                   height="229px"
@@ -1404,9 +1381,13 @@ export default function TravelCourseDetail() {
                           최적 날씨
                         </Text>
                         <Text fontSize="sm" color="gray.500">
-                          {weatherInfo.seasonalInfo ? weatherInfo.seasonalInfo.conditions :
-                           courseDetail.overview.includes('눈') ? '겨울 설경' : 
-                           courseDetail.overview.includes('해변') ? '여름 바다' : '맑은 날씨, 쾌적한 기온'}
+                          {weatherInfo.seasonalInfo
+                            ? weatherInfo.seasonalInfo.conditions
+                            : courseDetail.overview.includes("눈")
+                            ? "겨울 설경"
+                            : courseDetail.overview.includes("해변")
+                            ? "여름 바다"
+                            : "맑은 날씨, 쾌적한 기온"}
                         </Text>
                       </Box>
                     </Box>
@@ -1418,9 +1399,13 @@ export default function TravelCourseDetail() {
                           대비 사항
                         </Text>
                         <Text fontSize="sm" color="gray.500">
-                          {weatherInfo.seasonalInfo ? weatherInfo.seasonalInfo.preparation :
-                           courseDetail.overview.includes('등산') ? '등산복, 등산화 준비' : 
-                           courseDetail.overview.includes('해변') ? '자외선 차단제, 물놀이용품' : '방수 의류와 우산 준비'}
+                          {weatherInfo.seasonalInfo
+                            ? weatherInfo.seasonalInfo.preparation
+                            : courseDetail.overview.includes("등산")
+                            ? "등산복, 등산화 준비"
+                            : courseDetail.overview.includes("해변")
+                            ? "자외선 차단제, 물놀이용품"
+                            : "방수 의류와 우산 준비"}
                         </Text>
                       </Box>
                     </Box>
@@ -1430,7 +1415,7 @@ export default function TravelCourseDetail() {
                         <Icon as={FaCalendarAlt} color="#fb8072" boxSize={5} mr={3} />
                         <Box>
                           <Text fontWeight="bold" fontSize="sm">
-                            {courseDetail.spots[0]?.address.split(' ')[0]} 현재 날씨
+                            {courseDetail.spots[0]?.address.split(" ")[0]} 현재 날씨
                           </Text>
                           <Text fontSize="sm" color="gray.500" noOfLines={1}>
                             {`${weatherInfo.forecast[0].sky}, ${weatherInfo.forecast[0].tmp}°C (강수확률 ${weatherInfo.forecast[0].pop}%, 습도 ${weatherInfo.forecast[0].reh}%)`}
@@ -1445,7 +1430,8 @@ export default function TravelCourseDetail() {
                             방문 기간
                           </Text>
                           <Text fontSize="sm" color="gray.500">
-                            최소 {Math.max(1, Math.ceil(courseDetail.spots.length / 3))}박 {Math.max(2, Math.ceil(courseDetail.spots.length / 3) + 1)}일 권장
+                            최소 {Math.max(1, Math.ceil(courseDetail.spots.length / 3))}박{" "}
+                            {Math.max(2, Math.ceil(courseDetail.spots.length / 3) + 1)}일 권장
                           </Text>
                         </Box>
                       </Box>
@@ -1464,68 +1450,75 @@ export default function TravelCourseDetail() {
                 display="flex"
                 flexDirection="column"
               >
-                <Box 
-                  className="price-card-header" 
-                  bg="#ffb3c1" 
-                  pt={6} 
-                  pb={5} 
-                  px={3}
-                  height="155px"
-                >
+                <Box className="price-card-header" bg="#ffb3c1" pt={6} pb={5} px={3} height="155px">
                   <Heading size="md" mb={4}>
                     알아두면 좋은 팁
                   </Heading>
                   <Box className="price-card-price">
                     <Flex justify="center">
-                      <NextImage 
-                        src="/images/popular/info.png" 
-                        alt="정보" 
-                        width={64} 
-                        height={64}
-                        quality={100}
-                      />
+                      <NextImage src="/images/popular/info.png" alt="정보" width={64} height={64} quality={100} />
                     </Flex>
                   </Box>
                   <Text className="price-card-description">여행의 편의를 위한 정보</Text>
                 </Box>
 
-                <Box 
-                  className="price-card-body" 
-                  p={4} 
-                  flex="1" 
-                  display="flex" 
+                <Box
+                  className="price-card-body"
+                  p={4}
+                  flex="1"
+                  display="flex"
                   flexDirection="column"
                   justifyContent="space-between"
                   height="229px"
                 >
                   <VStack spacing={6} align="stretch">
                     <Box>
-                      <Text fontWeight="bold" fontSize="sm" mb={1}>방문 일정</Text>
-                      <Text fontSize="xs" color="gray.600" ml={2}>• {recommendedTimes}</Text>
+                      <Text fontWeight="bold" fontSize="sm" mb={1}>
+                        방문 일정
+                      </Text>
+                      <Text fontSize="xs" color="gray.600" ml={2}>
+                        • {recommendedTimes}
+                      </Text>
                     </Box>
 
                     <Box>
-                      <Text fontWeight="bold" fontSize="sm" mb={1}>추천 코스</Text>
-                      <Text fontSize="xs" color="gray.600" ml={2}>• {courseDetail.spots.length > 1 ? 
-                        `${courseDetail.spots[0].title} → ${courseDetail.spots.length > 2 ? 
-                        courseDetail.spots[1].title : ''} 등` : 
-                        '주요 관광지 순서대로 방문'}</Text>
+                      <Text fontWeight="bold" fontSize="sm" mb={1}>
+                        추천 코스
+                      </Text>
+                      <Text fontSize="xs" color="gray.600" ml={2}>
+                        •{" "}
+                        {courseDetail.spots.length > 1
+                          ? `${courseDetail.spots[0].title} → ${
+                              courseDetail.spots.length > 2 ? courseDetail.spots[1].title : ""
+                            } 등`
+                          : "주요 관광지 순서대로 방문"}
+                      </Text>
                     </Box>
 
                     <Box>
-                      <Text fontWeight="bold" fontSize="sm" mb={1}>여행 준비물</Text>
-                      <Text fontSize="xs" color="gray.600" ml={2}>• {weatherInfo.seasonalInfo 
-                          ? weatherInfo.seasonalInfo.preparation 
-                          : courseDetail.overview.includes('해변') 
-                            ? '등산화, 편한 옷, 무릎, 물, 스틱' 
-                            : '편안한 신발, 모자, 물, 카메라'}</Text>
+                      <Text fontWeight="bold" fontSize="sm" mb={1}>
+                        여행 준비물
+                      </Text>
+                      <Text fontSize="xs" color="gray.600" ml={2}>
+                        •{" "}
+                        {weatherInfo.seasonalInfo
+                          ? weatherInfo.seasonalInfo.preparation
+                          : courseDetail.overview.includes("해변")
+                          ? "등산화, 편한 옷, 무릎, 물, 스틱"
+                          : "편안한 신발, 모자, 물, 카메라"}
+                      </Text>
                     </Box>
 
                     <Box>
-                      <Text fontWeight="bold" fontSize="sm" mb={1}>현지 즐기기</Text>
-                      <Text fontSize="xs" color="gray.600" ml={2}>• {courseDetail.spots.length > 0 && courseDetail.spots[0].address ? 
-                        `${courseDetail.spots[0].address.split(' ')[1] || ''} 지역 특산물 맛보기` : 
-                        '현지 음식 맛보기'}</Text>
+                      <Text fontWeight="bold" fontSize="sm" mb={1}>
+                        현지 즐기기
+                      </Text>
+                      <Text fontSize="xs" color="gray.600" ml={2}>
+                        •{" "}
+                        {courseDetail.spots.length > 0 && courseDetail.spots[0].address
+                          ? `${courseDetail.spots[0].address.split(" ")[1] || ""} 지역 특산물 맛보기`
+                          : "현지 음식 맛보기"}
+                      </Text>
                     </Box>
                   </VStack>
                 </Box>

@@ -28,6 +28,7 @@ export default function RegionHighlights() {
 
       setArea(areaCode[index].name);
 
+      // @ts-ignore
       // 여행 코스 (contentTypeId: 25)
       const courseCountRes: CountResponse = await tour.getAreaBasedList({
         areaCode: areaCode[index].code,
@@ -45,6 +46,7 @@ export default function RegionHighlights() {
       });
       setCourseList(courseRes.response.body.items.item);
 
+      // @ts-ignore
       // 음식점/가성비 업소 (contentTypeId: 39)
       const foodCountRes: CountResponse = await tour.getAreaBasedList({
         areaCode: areaCode[index].code,
@@ -62,6 +64,7 @@ export default function RegionHighlights() {
       });
       setFoodList(foodRes.response.body.items.item);
 
+      // @ts-ignore
       // 지역 이벤트/행사 (contentTypeId: 15)
       const eventCountRes: CountResponse = await tour.getAreaBasedList({
         areaCode: areaCode[index].code,

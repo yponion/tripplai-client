@@ -25,7 +25,7 @@ export default function GoodPrice({ area, areaBasedList }: Props) {
           >
             <div className="w-24 h-24 flex-shrink-0 rounded-xl overflow-hidden bg-gray-200">
               {shop.firstimage ? (
-                <img src={shop.firstimage} alt={shop.imgname} className="w-full h-full object-cover" />
+                <img src={shop.firstimage} alt={`${shop.title} 이미지`} className="w-full h-full object-cover" />
               ) : (
                 <div className="flex items-center justify-center w-full h-full bg-gray-100 text-gray-500 text-sm">
                   이미지 없음

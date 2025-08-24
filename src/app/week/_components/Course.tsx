@@ -19,7 +19,7 @@ export default function Course({ area, areaBasedList }: Props) {
           >
             <div className="h-48 md:h-56 w-full bg-gray-200">
               {area.firstimage ? (
-                <img src={area.firstimage} alt={area.imgname} className="w-full h-full object-cover" />
+                <img src={area.firstimage} alt={`${area.title} 이미지`} className="w-full h-full object-cover" />
               ) : (
                 <div className="flex items-center justify-center w-full h-full bg-gray-100 text-gray-500">
                   이미지 없음

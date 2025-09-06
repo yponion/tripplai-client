@@ -177,7 +177,11 @@ export default function RegionSection({ onFilterClick }: RegionSectionProps) {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             {regions.map((region, regionIndex) => (
-              <div key={regionIndex} className={getCardClasses()}>
+              <div
+                key={regionIndex}
+                className={getCardClasses()}
+                onClick={() => router.push(`/detail/${region.contentid}`)}
+              >
                 <div className="h-48 overflow-hidden">
                   {region.firstimage ? (
                     <img
@@ -206,21 +210,3 @@ export default function RegionSection({ onFilterClick }: RegionSectionProps) {
     </section>
   );
 }
-
-// CategorySlider에서 사용하는 categories 배열을 여기서도 사용하기 위해 복사
-const categories = [
-  { id: 1, name: "한적한 시골", icon: "🏡" },
-  { id: 2, name: "절친 이야기", icon: "🎫" },
-  { id: 3, name: "최고의 전망", icon: "🏞️" },
-  { id: 4, name: "한옥", icon: "🏯" },
-  { id: 5, name: "국립공원", icon: "🏔️" },
-  { id: 6, name: "정적 공간", icon: "🧘" },
-  { id: 7, name: "맛집 수영장", icon: "🍽️" },
-  { id: 8, name: "해변 바로 앞", icon: "🏖️" },
-  { id: 9, name: "섬", icon: "🏝️" },
-  { id: 10, name: "기상천외한 숙소", icon: "🏨" },
-  { id: 11, name: "캠핑", icon: "⛺" },
-  { id: 12, name: "통나무집", icon: "🏡" },
-  { id: 13, name: "동굴", icon: "🏞️" },
-  { id: 14, name: "조소형 주택", icon: "🏠" },
-];

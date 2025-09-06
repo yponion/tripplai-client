@@ -1,5 +1,7 @@
 import { Review, ReviewListResponse, CreateReviewRequest } from '@/types/review';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 interface GetReviewsParams {
   page?: number;
   size?: number;
@@ -140,7 +142,7 @@ export async function createReview(
       const token = sessionStorage.getItem('accessToken');
 
       try {
-        const response = await fetch('http://localhost:8080/api/receiptReview', {
+        const response = await fetch(`${API_URL}/api/receiptReview`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',

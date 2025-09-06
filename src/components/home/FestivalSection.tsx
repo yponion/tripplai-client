@@ -6,6 +6,8 @@ import Link from "next/link";
 import Button from "@/components/common/Button";
 import { useState, useEffect } from "react";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 // API 응답 타입 정의
 interface Course {
   courseId: number;
@@ -60,7 +62,7 @@ async function filterValidImages(courses: Course[]) {
 
 // API에서 코스 데이터를 가져오는 함수
 async function fetchCourseData(page = 0, limit = 50) {
-  const response = await fetch(`http://localhost:8080/api/course?page=${page}&limit=${limit}`, {
+  const response = await fetch(`${API_URL}/api/course?page=${page}&limit=${limit}`, {
     mode: "cors",
     cache: "no-store",
   });

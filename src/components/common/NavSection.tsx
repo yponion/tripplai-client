@@ -1,6 +1,13 @@
 "use client";
 
-import { FaUserCircle, FaMapMarkedAlt, FaSearch, FaSun, FaMoon, FaPalette } from "react-icons/fa";
+import {
+  FaUserCircle,
+  FaMapMarkedAlt,
+  FaSearch,
+  FaSun,
+  FaMoon,
+  FaPalette,
+} from "react-icons/fa";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
@@ -40,35 +47,64 @@ const NavSection = () => {
     document.documentElement.classList.add("no-transition");
 
     // 현재 테마 확인
-    const nextTheme = themeMode === "original" ? "dark" : themeMode === "dark" ? "light" : "original";
+    const nextTheme =
+      themeMode === "original"
+        ? "dark"
+        : themeMode === "dark"
+        ? "light"
+        : "original";
 
     // 대시보드 페이지 배경 즉시 업데이트
     const dashboardBg = document.querySelector('div[class*="py-12 bg-"]');
     if (dashboardBg) {
       if (nextTheme === "dark") {
-        (dashboardBg as HTMLElement).style.background = "linear-gradient(to bottom, #111827, #1f2937)";
-        (dashboardBg as HTMLElement).classList.remove("from-pink-50", "to-white", "from-blue-50");
-        (dashboardBg as HTMLElement).classList.add("from-gray-900", "to-gray-800");
+        (dashboardBg as HTMLElement).style.background =
+          "linear-gradient(to bottom, #111827, #1f2937)";
+        (dashboardBg as HTMLElement).classList.remove(
+          "from-pink-50",
+          "to-white",
+          "from-blue-50"
+        );
+        (dashboardBg as HTMLElement).classList.add(
+          "from-gray-900",
+          "to-gray-800"
+        );
       } else if (nextTheme === "light") {
-        (dashboardBg as HTMLElement).style.background = "linear-gradient(to bottom, #eff6ff, #ffffff)";
-        (dashboardBg as HTMLElement).classList.remove("from-pink-50", "to-white", "from-gray-900", "to-gray-800");
+        (dashboardBg as HTMLElement).style.background =
+          "linear-gradient(to bottom, #eff6ff, #ffffff)";
+        (dashboardBg as HTMLElement).classList.remove(
+          "from-pink-50",
+          "to-white",
+          "from-gray-900",
+          "to-gray-800"
+        );
         (dashboardBg as HTMLElement).classList.add("from-blue-50");
       } else {
-        (dashboardBg as HTMLElement).style.background = "linear-gradient(to bottom, #fdf2f8, #ffffff)";
-        (dashboardBg as HTMLElement).classList.remove("from-blue-50", "from-gray-900", "to-gray-800");
+        (dashboardBg as HTMLElement).style.background =
+          "linear-gradient(to bottom, #fdf2f8, #ffffff)";
+        (dashboardBg as HTMLElement).classList.remove(
+          "from-blue-50",
+          "from-gray-900",
+          "to-gray-800"
+        );
         (dashboardBg as HTMLElement).classList.add("from-pink-50", "to-white");
       }
     }
 
     // 배경 그라데이션 요소들 즉시 업데이트
-    const gradientBgs = document.querySelectorAll('div[class*="bg-gradient-to-b"]');
+    const gradientBgs = document.querySelectorAll(
+      'div[class*="bg-gradient-to-b"]'
+    );
     gradientBgs.forEach((element) => {
       if (nextTheme === "dark") {
-        (element as HTMLElement).style.background = "linear-gradient(to bottom, #111827, #1f2937)";
+        (element as HTMLElement).style.background =
+          "linear-gradient(to bottom, #111827, #1f2937)";
       } else if (nextTheme === "light") {
-        (element as HTMLElement).style.background = "linear-gradient(to bottom, #eff6ff, #ffffff)";
+        (element as HTMLElement).style.background =
+          "linear-gradient(to bottom, #eff6ff, #ffffff)";
       } else {
-        (element as HTMLElement).style.background = "linear-gradient(to bottom, #fdf2f8, #ffffff)";
+        (element as HTMLElement).style.background =
+          "linear-gradient(to bottom, #fdf2f8, #ffffff)";
       }
     });
 
@@ -248,7 +284,11 @@ const NavSection = () => {
           <div className="relative w-full">
             <div className={getSearchInputClasses()}>
               <div className="flex-grow">
-                <input type="text" placeholder="어디로 여행가세요?" className={getInputTextClasses()} />
+                <input
+                  type="text"
+                  placeholder="어디로 여행가세요?"
+                  className={getInputTextClasses()}
+                />
               </div>
               <Button variant="primary" size="sm" className="ml-2 rounded-full">
                 <FaSearch className="text-sm" />
@@ -310,6 +350,14 @@ const NavSection = () => {
             리뷰보기
           </Link>
 
+          <Link href="/help" className={getLinkClasses()}>
+            고객센터
+          </Link>
+
+          <Link href="/gathering" className={getLinkClasses()}>
+            여행멤버 구하기
+          </Link>
+
           {/* AI 여행 계획 드롭다운 메뉴 */}
           <div
             className="relative hidden md:block"
@@ -317,7 +365,11 @@ const NavSection = () => {
             onMouseLeave={() => setIsPlanMenuOpen(false)}
           >
             <Link href="/travel/create" className="block">
-              <Button variant="outline" size="sm" className={`font-medium font-semibold ${getDashboardTextClass()}`}>
+              <Button
+                variant="outline"
+                size="sm"
+                className={`font-medium font-semibold ${getDashboardTextClass()}`}
+              >
                 <span>AI 여행 계획</span>
               </Button>
             </Link>
@@ -348,7 +400,9 @@ const NavSection = () => {
               aria-label="로그인"
             >
               <FaUserCircle className={getUserIconClasses()} />
-              <span className={`hidden md:block text-sm font-semibold ${getDashboardTextClass()}`}>
+              <span
+                className={`hidden md:block text-sm font-semibold ${getDashboardTextClass()}`}
+              >
                 로그인
               </span>
             </Button>
@@ -358,11 +412,21 @@ const NavSection = () => {
               size="sm"
               className="ml-1 flex items-center gap-2"
               onClick={handleLoginClick}
-              aria-label={JSON.parse(jwtDecode(sessionStorage.getItem("accessToken")!).sub!).nickname}
+              aria-label={
+                JSON.parse(
+                  jwtDecode(sessionStorage.getItem("accessToken")!).sub!
+                ).nickname
+              }
             >
               <FaUserCircle className={getUserIconClasses()} />
-              <span className={`hidden md:block text-sm font-semibold ${getDashboardTextClass()}`}>
-                {JSON.parse(jwtDecode(sessionStorage.getItem("accessToken")!).sub!).nickname}
+              <span
+                className={`hidden md:block text-sm font-semibold ${getDashboardTextClass()}`}
+              >
+                {
+                  JSON.parse(
+                    jwtDecode(sessionStorage.getItem("accessToken")!).sub!
+                  ).nickname
+                }
               </span>
             </Button>
           )}
@@ -399,7 +463,7 @@ const NavSection = () => {
       {isLoginModalOpen && (
         <>
           {/* 어두운 배경 */}
-          <div 
+          <div
             className="fixed top-0 w-dvw h-dvh bg-black opacity-50 z-[9999]"
             onClick={() => setIsLoginModalOpen(false)}
           />

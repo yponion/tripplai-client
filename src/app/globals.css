@@ -170,6 +170,14 @@ body {
     @apply flex items-center text-sm text-gray-600 mb-1;
   }
 
+  /* 카드 배지/태그 */
+  .badge-soft {
+    @apply px-2.5 py-1 rounded-full text-xs font-semibold bg-white/80 text-rose-500 shadow-sm;
+  }
+  .chip {
+    @apply inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-gray-100 text-gray-600;
+  }
+
   /* 에어비앤비 스타일 버튼 */
   .airbnb-btn {
     @apply rounded-lg font-medium transition-all duration-200;
@@ -297,6 +305,15 @@ html {
   transition-duration: 0.3s;
   transition-timing-function: ease-in-out;
 }
+
+/* 깔끔한 검색바 (테두리 없는 둥근 필 형태) */
+.searchbar { @apply relative flex items-center rounded-full bg-gray-100 dark:bg-[#2b2f33] transition-all duration-200; }
+.searchbar:hover { @apply shadow; }
+.searchbar:focus-within { @apply shadow-md; }
+.searchbar-icon { @apply absolute left-3 text-gray-400; }
+.searchbar-input { @apply w-full pl-10 pr-20 py-3 rounded-full bg-transparent outline-none text-sm; }
+.searchbar-clear { @apply absolute right-10 h-6 w-6 flex items-center justify-center text-gray-400 hover:text-gray-600 dark:hover:text-gray-300; }
+.searchbar-button-icon { @apply absolute right-2 h-8 w-8 flex items-center justify-center rounded-full text-white bg-rose-500 hover:bg-pink-600 transition-colors; }
 
 /* 다크모드 텍스트 색상 대응 */
 .text-theme-primary {

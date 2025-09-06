@@ -1,10 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-if (!API_URL) {
-  console.error('NEXT_PUBLIC_API_URL 환경변수가 설정되지 않았습니다.');
-}
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://3.34.52.239:8080';
 
 const FASTAPI_URL = process.env.NEXT_PUBLIC_FASTAPI_URL || 'http://localhost:8000';
 
@@ -189,6 +185,72 @@ export const authApi = {
     }
   }
 
+};
+
+// 채팅/모집 관련 API
+export const chatApi = {
+  // 채팅방 생성 (모집글 기준)
+  createRoom: async (gatheringId: number, roomName: string) => {
+    const url = `/api/chat/gathering/${gatheringId}/chat`;
+    const res = await api.post(url, null, { params: { roomName } });
+    return res.data as { code: string; message: string; id: number };
+  },
+
+  // 채팅방 참가
+  attendRoom: async (gatheringId: number, chatId: number) => {
+    const url = `/api/chat/gathering/${gatheringId}/chat/${chatId}/attend`;
+    const res = await api.post(url, null, { params: { chatId } });
+    return res.data as { code: string; message: string };
+  },
+
+  // 내 채팅방 목록 (모집글 기준)
+  getMyRooms: async (gatheringId: number, pageNum = 0) => {
+    const url = `/api/chat/gathering/${gatheringId}/my/chats`;
+    const res = await api.get(url, { params: { pageNum } });
+    return res.data as {
+      code: string;
+      message: string;
+      content: { id: number; name: string; count: number; createdBy: string; status: boolean; unReadCount: number }[];
+      hasNext: boolean;
+    };
+  },
+
+  // 채팅방 목록 (모집글 기준)
+  getRooms: async (gatheringId: number, pageNum = 0) => {
+    const url = `/api/chat/gathering/${gatheringId}/chats`;
+    const res = await api.get(url, { params: { pageNum } });
+    return res.data as {
+      code: string;
+      message: string;
+      content: { id: number; name: string; count: number; email: string; status: boolean }[];
+      hasNext: boolean;
+    };
+  },
+
+  // 채팅방 메시지 조회
+  getMessages: async (chatId: number) => {
+    const url = `/api/chat/messages/${chatId}`;
+    const res = await api.get(url);
+    return res.data as {
+      code: string;
+      message: string;
+      content: { roomId: number; content: string; email: string; status: boolean }[];
+    };
+  },
+
+  // 메시지 읽음 처리
+  readMessages: async (chatId: number) => {
+    const url = `/api/chat/chat/${chatId}`;
+    const res = await api.post(url);
+    return res.data as { code: string; message: string };
+  },
+
+  // 채팅방 나가기
+  leaveRoom: async (chatId: number) => {
+    const url = `/api/chat/chat/${chatId}`;
+    const res = await api.delete(url);
+    return res.data as { code: string; message: string };
+  },
 };
 
 export const infoApi = {

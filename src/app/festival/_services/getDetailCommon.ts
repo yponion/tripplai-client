@@ -1,8 +1,9 @@
 import { DetailCommonParams } from "@/types/festival";
 
-
 export default async function getDetailCommon(id: string) {
-  const url = new URL(process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/detailCommon2");
+  const url = new URL(
+    process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/detailCommon2"
+  );
 
   const params: DetailCommonParams = {
     contentId: id,
@@ -10,7 +11,7 @@ export default async function getDetailCommon(id: string) {
     MobileApp: process.env.NEXT_PUBLIC_SERVICE_NAME!,
     _type: "json",
     serviceKey: process.env.NEXT_PUBLIC_TOUR_API_KEY!,
-  }
+  };
 
   Object.entries(params).forEach(([key, value]) => {
     if (value !== undefined) {

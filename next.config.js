@@ -1,6 +1,6 @@
 /** @type {import('next').NextConfig} */
 const path = require("path");
- 
+
 const nextConfig = {
   transpilePackages: ["@chakra-ui/react", "@chakra-ui/next-js"],
   images: {
@@ -25,7 +25,7 @@ const nextConfig = {
       "images.unsplash.com",
       "3.34.52.239",
       "localhost",
-      "127.0.0.1"
+      "127.0.0.1",
     ],
     unoptimized: true,
   },
@@ -43,6 +43,5 @@ const nextConfig = {
     return config;
   },
 };
- 
+
 module.exports = nextConfig;
- 

@@ -30,4 +30,22 @@ export interface CreateReviewRequest {
   title: string;
   content: string;
   rating: number;
-} 
+  startDate?: string;
+  endDate?: string;
+  storeName?: string;
+  detailedLocation?: string;
+  parentLocation?: string;
+}
+
+export interface CreateReviewFormData {
+  title: string;
+  content: string;
+  location: string;
+  rating: number;
+  createdAt: string;
+  startDate?: string;
+  endDate?: string;
+  storeName?: string;
+  detailedLocation?: string;
+  parentLocation?: string;
+}

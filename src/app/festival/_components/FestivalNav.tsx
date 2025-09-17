@@ -11,7 +11,6 @@ const logo = process.env.NEXT_PUBLIC_SERVICE_NAME;
 
 const items = [
   { titile: "축제리스트", href: "/festival/list" },
-  { titile: "축제지도", href: "/festival/map" },
   { titile: "축제달력", href: "/festival/calendar" },
 ];
 
@@ -33,7 +32,10 @@ export default function FestivalNav() {
       <nav className="hidden md:flex items-center">
         <ul className="flex list-none m-0 p-0 gap-5">
           {items.map((item) => (
-            <li key={item.titile} className="text-xl font-medium transition-all hover:text-rose-500">
+            <li
+              key={item.titile}
+              className="text-xl font-medium transition-all hover:text-rose-500"
+            >
               <Link
                 href={item.href}
                 className={clsx("decoration-rose-500 underline-offset-4", {

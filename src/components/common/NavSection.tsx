@@ -396,12 +396,6 @@ const NavSection = () => {
                   축제 리스트
                 </Link>
                 <Link
-                  href="/festival/map"
-                  className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-white"
-                >
-                  축제 지도
-                </Link>
-                <Link
                   href="/festival/calendar"
                   className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-white"
                 >

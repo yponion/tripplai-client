@@ -7,7 +7,11 @@ import CreateReviewModal from "@/components/reviews/CreateReviewModal";
 export default function CreateReviewButton() {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  const handleSubmit = async (reviewData: any, proofImage?: File | null, reviewImages?: File[]) => {
+  const handleSubmit = async (
+    reviewData: any,
+    proofImage?: File | null,
+    reviewImages?: File[]
+  ) => {
     try {
       // FormData 생성 (이미지 파일 포함)
       const formData = new FormData();
@@ -20,7 +24,7 @@ export default function CreateReviewButton() {
         address: reviewData.location || "",
       };
 
-      // 리뷰 이미지만 추가 (영수증 이미지는 완전히 제외)
+      // 리뷰 이미지만 S3에 업로드 (증명 이미지는 업로드하지 않음)
       if (reviewImages && reviewImages.length > 0) {
         reviewImages.forEach((image, index) => {
           formData.append("images", image);
@@ -33,12 +37,24 @@ export default function CreateReviewButton() {
       });
       formData.append("review", reviewBlob);
 
-      // FormData 내용 디버깅
-      let imageCount = 0;
+      // FormData 내용 디버깅 (리뷰 이미지만)
+      let reviewImageCount = 0;
+
       for (let [key, value] of formData.entries()) {
         if (key === "images") {
-          imageCount++;
+          reviewImageCount++;
         }
+      }
+
+      console.log(`📸 S3 업로드할 리뷰 이미지: ${reviewImageCount}개`);
+      console.log(
+        `💡 증명 이미지는 S3에 업로드하지 않음 (Google Vision API로 목적지만 추출)`
+      );
+
+      if (reviewImageCount === 0) {
+        console.log(
+          "ℹ️ S3에 업로드할 리뷰 이미지가 없습니다. (증명 이미지만 있는 경우)"
+        );
       }
 
       // 인증 토큰 가져오기
@@ -69,7 +85,9 @@ export default function CreateReviewButton() {
       } else {
         const errorData = await response.json();
         console.error("❌ 서버 응답 오류:", errorData);
-        alert(`리뷰 등록에 실패했습니다: ${errorData.error || "알 수 없는 오류"}`);
+        alert(
+          `리뷰 등록에 실패했습니다: ${errorData.error || "알 수 없는 오류"}`
+        );
       }
     } catch (error) {
       console.error("💥 리뷰 등록 실패:", error);
@@ -89,7 +107,11 @@ export default function CreateReviewButton() {
         <span>리뷰 작성하기</span>
       </button>
 
-      <CreateReviewModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSubmit={handleSubmit} />
+      <CreateReviewModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSubmit={handleSubmit}
+      />
     </>
   );
 }

@@ -2,25 +2,23 @@
 
 import { useState, useRef, useEffect } from "react";
 import { createPortal } from "react-dom";
-import { FaTimes, FaStar, FaUpload, FaCheck, FaSpinner, FaImage, FaTrash } from "react-icons/fa";
+import {
+  FaTimes,
+  FaStar,
+  FaUpload,
+  FaCheck,
+  FaSpinner,
+  FaImage,
+  FaTrash,
+} from "react-icons/fa";
 import useThemeMode from "@/hooks/useDarkMode";
+import { CreateReviewFormData } from "@/types/review";
 
 interface CreateReviewModalProps {
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (
-    reviewData: {
-      title: string;
-      content: string;
-      location: string;
-      rating: number;
-      createdAt: string;
-      startDate?: string;
-      endDate?: string;
-      storeName?: string;
-      detailedLocation?: string;
-      parentLocation?: string;
-    },
+    reviewData: CreateReviewFormData,
     proofImage?: File | null,
     reviewImages?: File[]
   ) => void;
@@ -73,7 +71,9 @@ const formatLocation = (location: string, parentLocation?: string) => {
     return parentLocation;
   }
   // 그 외의 경우 "상위지역 하위지역" 형식으로 표시
-  return location && parentLocation ? `${parentLocation} ${location}` : location || parentLocation || "";
+  return location && parentLocation
+    ? `${parentLocation} ${location}`
+    : location || parentLocation || "";
 };
 
 export default function CreateReviewModal({
@@ -750,7 +750,8 @@ export default function CreateReviewModal({
           if (locationInfo.cities && locationInfo.cities.length > 0) {
             const city = locationInfo.cities[0];
             // locationMappings에서 상위 지역 찾기
-            const parentLocation = LOCATION_MAPPING[city as keyof typeof LOCATION_MAPPING] || city;
+            const parentLocation =
+              LOCATION_MAPPING[city as keyof typeof LOCATION_MAPPING] || city;
             setExtractedInfo({
               ...info,
               location: city,
@@ -776,7 +777,10 @@ export default function CreateReviewModal({
 
 정보를 확인하고 필요시 수정해주세요.`);
       } else {
-        console.error("모달 - API 응답에 success나 extractedText가 없음:", data);
+        console.error(
+          "모달 - API 응답에 success나 extractedText가 없음:",
+          data
+        );
         throw new Error("텍스트 추출 실패");
       }
     } catch (error) {
@@ -790,7 +794,8 @@ export default function CreateReviewModal({
         } else if (error.message.includes("403")) {
           errorMessage = "Google Vision API 접근 권한이 없습니다.";
         } else if (error.message.includes("429")) {
-          errorMessage = "API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.";
+          errorMessage =
+            "API 요청 한도를 초과했습니다. 잠시 후 다시 시도해주세요.";
         } else {
           errorMessage = error.message;
         }
@@ -802,9 +807,37 @@ export default function CreateReviewModal({
     }
   };
 
-  const handleProofFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleProofFileChange = async (
+    e: React.ChangeEvent<HTMLInputElement>
+  ) => {
     const file = e.target.files?.[0] || null;
     if (file) {
+      // 파일 검증
+      if (file.size > 5 * 1024 * 1024) {
+        alert(
+          `파일 크기가 너무 큽니다. (${Math.round(
+            file.size / 1024 / 1024
+          )}MB > 5MB)\n5MB 이하의 이미지를 선택해주세요.`
+        );
+        return;
+      }
+
+      if (!file.type.startsWith("image/")) {
+        alert("이미지 파일만 업로드할 수 있습니다.");
+        return;
+      }
+
+      const supportedTypes = [
+        "image/jpeg",
+        "image/jpg",
+        "image/png",
+        "image/webp",
+      ];
+      if (!supportedTypes.includes(file.type)) {
+        alert("지원하지 않는 이미지 형식입니다.\n지원 형식: JPG, PNG, WEBP");
+        return;
+      }
+
       setProofImage(file);
 
       // 스캔 애니메이션 시작
@@ -841,12 +874,65 @@ export default function CreateReviewModal({
     if (files && files.length > 0) {
       const newFiles = Array.from(files);
 
+      // 파일 검증
+      const validFiles: File[] = [];
+      const invalidFiles: string[] = [];
+
+      newFiles.forEach((file) => {
+        // 파일 크기 검증 (5MB 제한)
+        if (file.size > 5 * 1024 * 1024) {
+          invalidFiles.push(
+            `${file.name} (크기: ${Math.round(
+              file.size / 1024 / 1024
+            )}MB > 5MB)`
+          );
+          return;
+        }
+
+        // 파일 형식 검증
+        if (!file.type.startsWith("image/")) {
+          invalidFiles.push(`${file.name} (이미지 파일이 아님)`);
+          return;
+        }
+
+        // 지원하는 형식 검증
+        const supportedTypes = [
+          "image/jpeg",
+          "image/jpg",
+          "image/png",
+          "image/webp",
+        ];
+        if (!supportedTypes.includes(file.type)) {
+          invalidFiles.push(`${file.name} (지원하지 않는 형식)`);
+          return;
+        }
+
+        validFiles.push(file);
+      });
+
+      // 검증 실패한 파일들 알림
+      if (invalidFiles.length > 0) {
+        alert(
+          `다음 파일들은 업로드할 수 없습니다:\n${invalidFiles.join(
+            "\n"
+          )}\n\n지원 형식: JPG, PNG, WEBP (최대 5MB)`
+        );
+      }
+
+      if (validFiles.length === 0) {
+        return; // 유효한 파일이 없으면 중단
+      }
+
       // 최대 5개까지만 허용
-      const totalFiles = [...reviewImages, ...newFiles];
+      const totalFiles = [...reviewImages, ...validFiles];
       const filesToAdd = totalFiles.slice(0, 5);
 
       if (totalFiles.length > 5) {
-        alert("최대 5개의 이미지만 업로드할 수 있습니다.");
+        alert(
+          `최대 5개의 이미지만 업로드할 수 있습니다. ${
+            validFiles.length
+          }개 중 ${5 - reviewImages.length}개만 추가됩니다.`
+        );
       }
 
       setReviewImages(filesToAdd);
@@ -855,17 +941,25 @@ export default function CreateReviewModal({
       Promise.all(
         filesToAdd.map(
           (file) =>
-            new Promise<string>((resolve) => {
+            new Promise<string>((resolve, reject) => {
               const reader = new FileReader();
               reader.onloadend = () => {
                 resolve(reader.result as string);
               };
+              reader.onerror = () => {
+                reject(new Error(`이미지 미리보기 생성 실패: ${file.name}`));
+              };
               reader.readAsDataURL(file);
             })
         )
-      ).then((previews) => {
-        setReviewImagePreviews(previews);
-      });
+      )
+        .then((previews) => {
+          setReviewImagePreviews(previews);
+        })
+        .catch((error) => {
+          console.error("이미지 미리보기 생성 오류:", error);
+          alert("일부 이미지의 미리보기 생성에 실패했습니다.");
+        });
     }
   };
 
@@ -882,10 +976,38 @@ export default function CreateReviewModal({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // 필수 필드 검증
+    if (!title.trim()) {
+      alert("리뷰 제목을 입력해주세요.");
+      return;
+    }
+
+    if (!content.trim()) {
+      alert("리뷰 내용을 입력해주세요.");
+      return;
+    }
+
+    if (!location.trim()) {
+      alert("여행지를 입력해주세요.");
+      return;
+    }
+
     // 필수 이미지 체크
     if (!proofImage) {
-      alert("여행 증명 이미지가 필요합니다. 영수증, 항공권, 버스티켓 등을 업로드해주세요.");
+      alert(
+        "여행 증명 이미지가 필요합니다. 영수증, 항공권, 버스티켓 등을 업로드해주세요."
+      );
       return;
+    }
+
+    // 리뷰 이미지 개수 확인 (선택사항이지만 알림)
+    if (reviewImages.length === 0) {
+      const confirmSubmit = confirm(
+        "리뷰 이미지가 없습니다. 여행 사진을 추가하면 더 매력적인 리뷰가 됩니다.\n\n그래도 계속 진행하시겠습니까?"
+      );
+      if (!confirmSubmit) {
+        return;
+      }
     }
 
     // 추출된 정보를 포함한 리뷰 데이터 구성
@@ -899,8 +1021,12 @@ export default function CreateReviewModal({
       ...(extractedInfo.date && { startDate: extractedInfo.date }),
       ...(extractedInfo.date && { endDate: extractedInfo.date }),
       ...(extractedInfo.storeName && { storeName: extractedInfo.storeName }),
-      ...(extractedInfo.location && { detailedLocation: extractedInfo.location }),
-      ...(extractedInfo.parentLocation && { parentLocation: extractedInfo.parentLocation }),
+      ...(extractedInfo.location && {
+        detailedLocation: extractedInfo.location,
+      }),
+      ...(extractedInfo.parentLocation && {
+        parentLocation: extractedInfo.parentLocation,
+      }),
     };
 
     onSubmit(reviewData, proofImage, reviewImages);
@@ -942,7 +1068,9 @@ export default function CreateReviewModal({
         className={`${getModalStyle()} rounded-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden transition-colors duration-300 transform animate-modal-scale my-auto relative`}
       >
         <div className="flex justify-between items-center px-8 py-6 border-b border-gray-200 dark:border-gray-700">
-          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">리뷰 작성하기</h2>
+          <h2 className="text-2xl font-bold text-gray-800 dark:text-white">
+            리뷰 작성하기
+          </h2>
           <button
             onClick={onClose}
             className="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 border-none"
@@ -956,9 +1084,11 @@ export default function CreateReviewModal({
             {/* 증명 이미지 업로드 영역을 맨 위로 이동 */}
             <div>
               <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
-                여행 증명 이미지 {requireProofImage && <span className="text-red-500">*</span>}
+                여행 증명 이미지{" "}
+                {requireProofImage && <span className="text-red-500">*</span>}
                 <span className="block text-sm text-gray-500 dark:text-gray-400 mt-1">
-                  영수증, 항공권, 버스티켓 등 여행을 증명할 수 있는 이미지를 업로드해주세요
+                  영수증, 항공권, 버스티켓 등 여행을 증명할 수 있는 이미지를
+                  업로드해주세요 (검증용, 공개되지 않음)
                 </span>
               </label>
 
@@ -982,7 +1112,8 @@ export default function CreateReviewModal({
                       style={{
                         top: `${scanPosition}%`,
                         height: "2px",
-                        background: "linear-gradient(90deg, transparent, #ec4899 50%, transparent)",
+                        background:
+                          "linear-gradient(90deg, transparent, #ec4899 50%, transparent)",
                         boxShadow: "0 0 20px 5px rgba(236, 72, 153, 0.7)",
                         filter: "blur(0.5px)",
                       }}
@@ -995,7 +1126,8 @@ export default function CreateReviewModal({
                           right: 0,
                           top: 0,
                           height: "50px",
-                          background: "linear-gradient(180deg, rgba(236, 72, 153, 0.5), transparent)",
+                          background:
+                            "linear-gradient(180deg, rgba(236, 72, 153, 0.5), transparent)",
                           transform: "translateY(0)",
                         }}
                       ></div>
@@ -1007,7 +1139,9 @@ export default function CreateReviewModal({
                         <div className="flex items-center space-x-3">
                           <FaSpinner className="text-pink-500 text-2xl animate-spin" />
                           <p className="text-gray-800 dark:text-gray-200 font-medium">
-                            {isProcessing ? "텍스트 추출 중..." : "이미지 스캔 중..."}
+                            {isProcessing
+                              ? "텍스트 추출 중..."
+                              : "이미지 스캔 중..."}
                           </p>
                         </div>
                       </div>
@@ -1049,24 +1183,34 @@ export default function CreateReviewModal({
                     {Object.keys(extractedInfo).length > 0 && (
                       <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity cursor-help">
                         <div className="bg-white dark:bg-gray-800 bg-opacity-95 dark:bg-opacity-95 p-4 rounded-lg shadow-lg space-y-2 max-w-xs text-center">
-                          <div className="text-green-600 dark:text-green-400 font-bold text-lg mb-2">✅ 분석 완료!</div>
-                          {(extractedInfo.location || extractedInfo.parentLocation) && (
+                          <div className="text-green-600 dark:text-green-400 font-bold text-lg mb-2">
+                            ✅ 분석 완료!
+                          </div>
+                          {(extractedInfo.location ||
+                            extractedInfo.parentLocation) && (
                             <p className="text-sm text-gray-800 dark:text-gray-200">
                               <span className="font-medium">🗺️ 지역:</span>{" "}
-                              {formatLocation(extractedInfo.location || "", extractedInfo.parentLocation)}
+                              {formatLocation(
+                                extractedInfo.location || "",
+                                extractedInfo.parentLocation
+                              )}
                             </p>
                           )}
                           {extractedInfo.storeName && (
                             <p className="text-sm text-gray-800 dark:text-gray-200">
-                              <span className="font-medium">🏪 상호명:</span> {extractedInfo.storeName}
+                              <span className="font-medium">🏪 상호명:</span>{" "}
+                              {extractedInfo.storeName}
                             </p>
                           )}
                           {extractedInfo.date && (
                             <p className="text-sm text-gray-800 dark:text-gray-200">
-                              <span className="font-medium">📅 날짜:</span> {extractedInfo.date}
+                              <span className="font-medium">📅 날짜:</span>{" "}
+                              {extractedInfo.date}
                             </p>
                           )}
-                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">호버해서 결과 확인</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400 mt-2">
+                            호버해서 결과 확인
+                          </p>
                         </div>
                       </div>
                     )}
@@ -1079,8 +1223,12 @@ export default function CreateReviewModal({
                     <div className="bg-pink-50 dark:bg-pink-900 rounded-full p-5 mb-4 group-hover:bg-pink-100 dark:group-hover:bg-pink-800 transition-colors">
                       <FaUpload className="text-pink-500 text-3xl" />
                     </div>
-                    <p className="text-gray-600 dark:text-gray-300 font-medium text-lg">클릭하여 이미지 업로드</p>
-                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">JPG, PNG, WEBP (최대 5MB)</p>
+                    <p className="text-gray-600 dark:text-gray-300 font-medium text-lg">
+                      클릭하여 이미지 업로드
+                    </p>
+                    <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                      JPG, PNG, WEBP (최대 5MB)
+                    </p>
                   </div>
                 )}
                 <input
@@ -1096,7 +1244,9 @@ export default function CreateReviewModal({
             {/* 나머지 폼 필드들... */}
             <div className="grid md:grid-cols-2 gap-6">
               <div>
-                <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">여행지</label>
+                <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                  여행지
+                </label>
                 <input
                   type="text"
                   value={location}
@@ -1108,7 +1258,9 @@ export default function CreateReviewModal({
               </div>
 
               <div>
-                <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">제목</label>
+                <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                  제목
+                </label>
                 <input
                   type="text"
                   value={title}
@@ -1121,7 +1273,9 @@ export default function CreateReviewModal({
             </div>
 
             <div>
-              <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">내용</label>
+              <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                내용
+              </label>
               <textarea
                 value={content}
                 onChange={(e) => setContent(e.target.value)}
@@ -1133,7 +1287,9 @@ export default function CreateReviewModal({
 
             {/* 평점 선택 */}
             <div>
-              <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">평점</label>
+              <label className="block text-gray-700 dark:text-gray-300 font-medium mb-2">
+                평점
+              </label>
               <div className="flex items-center space-x-2">
                 {[1, 2, 3, 4, 5].map((star) => (
                   <button
@@ -1141,14 +1297,22 @@ export default function CreateReviewModal({
                     type="button"
                     onClick={() => setRating(star)}
                     className={`text-2xl focus:outline-none transition-transform hover:scale-110 ${
-                      rating >= star ? "text-yellow-400" : "text-gray-300 dark:text-gray-600"
+                      rating >= star
+                        ? "text-yellow-400"
+                        : "text-gray-300 dark:text-gray-600"
                     }`}
-                    style={{ border: "none", background: "transparent", padding: 0 }}
+                    style={{
+                      border: "none",
+                      background: "transparent",
+                      padding: 0,
+                    }}
                   >
                     <FaStar />
                   </button>
                 ))}
-                <span className="ml-2 text-gray-600 dark:text-gray-300">{rating}/5</span>
+                <span className="ml-2 text-gray-600 dark:text-gray-300">
+                  {rating}/5
+                </span>
               </div>
             </div>
 
@@ -1158,7 +1322,7 @@ export default function CreateReviewModal({
                 <div className="flex items-center">
                   <span>리뷰 이미지</span>
                   <span className="ml-2 text-sm text-gray-500 dark:text-gray-400">
-                    (첫 번째 이미지가 썸네일로 사용됩니다)
+                    (첫 번째 이미지가 썸네일로 사용됩니다, 공개됨)
                   </span>
                 </div>
               </label>
@@ -1169,10 +1333,16 @@ export default function CreateReviewModal({
                     <div
                       key={index}
                       className={`relative border ${
-                        index === 0 ? "border-pink-500" : "border-gray-200 dark:border-gray-700"
+                        index === 0
+                          ? "border-pink-500"
+                          : "border-gray-200 dark:border-gray-700"
                       } rounded-xl overflow-hidden aspect-square bg-white dark:bg-gray-900 group`}
                     >
-                      <img src={preview} alt={`리뷰 이미지 ${index + 1}`} className="w-full h-full object-cover" />
+                      <img
+                        src={preview}
+                        alt={`리뷰 이미지 ${index + 1}`}
+                        className="w-full h-full object-cover"
+                      />
                       {index === 0 && (
                         <div className="absolute top-2 left-2 bg-pink-500 text-white text-xs px-2 py-1 rounded-md">
                           썸네일
@@ -1197,7 +1367,9 @@ export default function CreateReviewModal({
                       <div className="bg-pink-50 dark:bg-pink-900 rounded-full p-3 mb-2 group-hover:bg-pink-100 dark:group-hover:bg-pink-800 transition-colors">
                         <FaImage className="text-pink-500 text-xl" />
                       </div>
-                      <p className="text-gray-600 dark:text-gray-300 font-medium text-sm">이미지 추가</p>
+                      <p className="text-gray-600 dark:text-gray-300 font-medium text-sm">
+                        이미지 추가
+                      </p>
                     </div>
                   )}
                 </div>

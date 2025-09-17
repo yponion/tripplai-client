@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import Layout from "@/components/Layout";
 import HeroSection from "@/components/home/HeroSection";
 import RegionSection from "@/components/home/RegionSection";
@@ -10,10 +11,13 @@ import ReviewsSection from "@/components/home/ReviewsSection";
 import Head from "next/head";
 
 export default function Home() {
+  const searchParams = useSearchParams();
   const [isOpen, setIsOpen] = useState(false);
   const [budget, setBudget] = useState(500000);
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [showErrorAlert, setShowErrorAlert] = useState(false);
+  const [errorMessage, setErrorMessage] = useState("");
   const sliderRef = useRef<HTMLDivElement>(null);
 
   // 필터 버튼 클릭 핸들러
@@ -68,7 +72,8 @@ export default function Home() {
 
     // 위치를 예산 값으로 변환
     const percentage = clampedOffset / sliderWidth;
-    const newBudget = Math.round((percentage * 900000 + 100000) / 10000) * 10000; // 1만원 단위로 반올림
+    const newBudget =
+      Math.round((percentage * 900000 + 100000) / 10000) * 10000; // 1만원 단위로 반올림
 
     setBudget(newBudget);
   };
@@ -125,6 +130,36 @@ export default function Home() {
     };
   }, [isOpen]);
 
+  // 로그인 에러 처리
+  useEffect(() => {
+    const loginError = searchParams.get("loginError");
+    if (loginError) {
+      let message = "";
+      switch (loginError) {
+        case "oauth_failed":
+          message = "소셜 로그인에 실패했습니다. 다시 시도해주세요.";
+          break;
+        case "processing_failed":
+          message = "로그인 처리 중 오류가 발생했습니다. 다시 시도해주세요.";
+          break;
+        default:
+          message = "로그인 중 오류가 발생했습니다.";
+      }
+      setErrorMessage(message);
+      setShowErrorAlert(true);
+
+      // URL에서 에러 파라미터 제거
+      const url = new URL(window.location.href);
+      url.searchParams.delete("loginError");
+      window.history.replaceState({}, "", url.toString());
+
+      // 5초 후 알림 자동 닫기
+      setTimeout(() => {
+        setShowErrorAlert(false);
+      }, 5000);
+    }
+  }, [searchParams]);
+
   // 예산 포맷팅 함수
   const formatBudget = (value: number) => {
     return new Intl.NumberFormat("ko-KR").format(value);
@@ -138,13 +173,63 @@ export default function Home() {
           name="description"
           content="목적지와 일정만 입력하면 AI가 당신만을 위한 최적의 여행 코스를 즉시 해 드립니다"
         />
-        <meta property="og:title" content="Tripplai - AI로 계획하는 당신만의 특별한 여행" />
+        <meta
+          property="og:title"
+          content="Tripplai - AI로 계획하는 당신만의 특별한 여행"
+        />
         <meta
           property="og:description"
           content="목적지와 일정만 입력하면 AI가 당신만을 위한 최적의 여행 코스를 즉시 추천해 드립니다"
         />
         <meta property="og:image" content="/images/hero-background.jpg" />
       </Head>
+
+      {/* 로그인 에러 알림 */}
+      {showErrorAlert && (
+        <div className="fixed top-4 right-4 z-[10000] max-w-sm">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-4 shadow-lg">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <svg
+                  className="h-5 w-5 text-red-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                    clipRule="evenodd"
+                  />
+                </svg>
+              </div>
+              <div className="ml-3 flex-1">
+                <p className="text-sm font-medium text-red-800">
+                  {errorMessage}
+                </p>
+              </div>
+              <div className="ml-4 flex-shrink-0">
+                <button
+                  className="inline-flex text-red-400 hover:text-red-600 focus:outline-none"
+                  onClick={() => setShowErrorAlert(false)}
+                >
+                  <svg
+                    className="h-5 w-5"
+                    viewBox="0 0 20 20"
+                    fill="currentColor"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z"
+                      clipRule="evenodd"
+                    />
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       <HeroSection />
       <RegionSection onFilterClick={handleFilterClick} />
@@ -160,7 +245,10 @@ export default function Home() {
       {isOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           {/* 배경 오버레이 */}
-          <div className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm" onClick={handleClose}></div>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 backdrop-blur-sm"
+            onClick={handleClose}
+          ></div>
 
           {/* 모달 콘텐츠 */}
           <div
@@ -169,7 +257,9 @@ export default function Home() {
           >
             {/* 모달 헤더 */}
             <div className="relative border-b border-gray-200 py-5 bg-gradient-to-r from-pink-50 to-purple-50">
-              <h2 className="text-2xl font-bold text-center text-gray-800">나만의 여행 계획 만들기</h2>
+              <h2 className="text-2xl font-bold text-center text-gray-800">
+                나만의 여행 계획 만들기
+              </h2>
               <button
                 className="absolute border-none left-4 top-5 w-8 h-8 flex items-center justify-center rounded-full bg-gradient-to-r from-pink-500 to-pink-600 text-white hover:from-pink-600 hover:to-pink-700 shadow-md hover:shadow-lg transition-all"
                 onClick={handleClose}
@@ -182,7 +272,12 @@ export default function Home() {
                   viewBox="0 0 24 24"
                   stroke="currentColor"
                 >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M6 18L18 6M6 6l12 12"
+                  />
                 </svg>
               </button>
             </div>
@@ -249,7 +344,9 @@ export default function Home() {
                   </h3>
                   <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">출발일</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        출발일
+                      </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                           <svg
@@ -272,7 +369,9 @@ export default function Home() {
                       </div>
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">도착일</label>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        도착일
+                      </label>
                       <div className="relative">
                         <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                           <svg
@@ -353,7 +452,9 @@ export default function Home() {
                     </svg>
                     예산 범위
                   </h3>
-                  <p className="text-sm mb-4 text-gray-600">1인당 예상 여행 경비 (교통, 숙박, 식사, 관광 포함)</p>
+                  <p className="text-sm mb-4 text-gray-600">
+                    1인당 예상 여행 경비 (교통, 숙박, 식사, 관광 포함)
+                  </p>
 
                   <div className="py-6 px-4">
                     <div className="relative">
@@ -366,14 +467,18 @@ export default function Home() {
                         {/* 채워진 부분 */}
                         <div
                           className="h-full bg-gradient-to-r from-pink-400 to-pink-500 rounded-full"
-                          style={{ width: `${((budget - 100000) / 900000) * 100}%` }}
+                          style={{
+                            width: `${((budget - 100000) / 900000) * 100}%`,
+                          }}
                         ></div>
                       </div>
 
                       {/* 슬라이더 핸들 */}
                       <div
                         className="absolute top-1/2 w-5 h-5 bg-white border-2 border-pink-500 rounded-full shadow-md -mt-[10px] -ml-[10px] cursor-grab active:cursor-grabbing"
-                        style={{ left: `${((budget - 100000) / 900000) * 100}%` }}
+                        style={{
+                          left: `${((budget - 100000) / 900000) * 100}%`,
+                        }}
                       ></div>
 
                       {/* 슬라이더 입력 (투명하게 처리) */}
@@ -391,10 +496,14 @@ export default function Home() {
 
                   <div className="flex justify-between mt-4">
                     <div className="border border-gray-200 rounded-full py-2 px-4 bg-white shadow-sm">
-                      <span className="text-gray-700">₩{formatBudget(100000)}</span>
+                      <span className="text-gray-700">
+                        ₩{formatBudget(100000)}
+                      </span>
                     </div>
                     <div className="border border-gray-200 rounded-full py-2 px-4 bg-white shadow-sm">
-                      <span className="text-gray-700">₩{formatBudget(budget)}</span>
+                      <span className="text-gray-700">
+                        ₩{formatBudget(budget)}
+                      </span>
                     </div>
                   </div>
                 </div>

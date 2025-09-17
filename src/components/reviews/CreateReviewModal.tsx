@@ -834,12 +834,12 @@ ${
   ) => {
     const file = e.target.files?.[0] || null;
     if (file) {
-      // 파일 검증
-      if (file.size > 5 * 1024 * 1024) {
+      // 파일 검증 (2MB 제한 - Vercel 배포 환경 고려)
+      if (file.size > 2 * 1024 * 1024) {
         alert(
           `파일 크기가 너무 큽니다. (${Math.round(
             file.size / 1024 / 1024
-          )}MB > 5MB)\n5MB 이하의 이미지를 선택해주세요.`
+          )}MB > 2MB)\n배포 환경에서는 2MB 이하의 이미지를 선택해주세요.`
         );
         return;
       }
@@ -901,12 +901,12 @@ ${
       const invalidFiles: string[] = [];
 
       newFiles.forEach((file) => {
-        // 파일 크기 검증 (5MB 제한)
-        if (file.size > 5 * 1024 * 1024) {
+        // 파일 크기 검증 (2MB 제한 - Vercel 배포 환경 고려)
+        if (file.size > 2 * 1024 * 1024) {
           invalidFiles.push(
             `${file.name} (크기: ${Math.round(
               file.size / 1024 / 1024
-            )}MB > 5MB)`
+            )}MB > 2MB)`
           );
           return;
         }
@@ -937,7 +937,7 @@ ${
         alert(
           `다음 파일들은 업로드할 수 없습니다:\n${invalidFiles.join(
             "\n"
-          )}\n\n지원 형식: JPG, PNG, WEBP (최대 5MB)`
+          )}\n\n지원 형식: JPG, PNG, WEBP (최대 2MB)`
         );
       }
 
@@ -945,15 +945,15 @@ ${
         return; // 유효한 파일이 없으면 중단
       }
 
-      // 최대 5개까지만 허용
+      // 최대 3개까지만 허용 (Vercel 배포 환경 고려)
       const totalFiles = [...reviewImages, ...validFiles];
-      const filesToAdd = totalFiles.slice(0, 5);
+      const filesToAdd = totalFiles.slice(0, 3);
 
-      if (totalFiles.length > 5) {
+      if (totalFiles.length > 3) {
         alert(
-          `최대 5개의 이미지만 업로드할 수 있습니다. ${
+          `배포 환경에서는 최대 3개의 이미지만 업로드할 수 있습니다. ${
             validFiles.length
-          }개 중 ${5 - reviewImages.length}개만 추가됩니다.`
+          }개 중 ${3 - reviewImages.length}개만 추가됩니다.`
         );
       }
 
@@ -1263,7 +1263,7 @@ ${
                       클릭하여 이미지 업로드
                     </p>
                     <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
-                      JPG, PNG, WEBP (최대 5MB)
+                      JPG, PNG, WEBP (최대 2MB)
                     </p>
                   </div>
                 )}
@@ -1364,7 +1364,7 @@ ${
               </label>
 
               <div className="mt-3">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                   {reviewImagePreviews.map((preview, index) => (
                     <div
                       key={index}
@@ -1395,7 +1395,7 @@ ${
                     </div>
                   ))}
 
-                  {reviewImagePreviews.length < 5 && (
+                  {reviewImagePreviews.length < 3 && (
                     <div
                       onClick={() => reviewImagesInputRef.current?.click()}
                       className="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl flex flex-col items-center justify-center aspect-square cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors group"

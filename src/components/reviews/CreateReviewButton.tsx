@@ -55,6 +55,7 @@ export default function CreateReviewButton() {
         console.log(
           "ℹ️ S3에 업로드할 리뷰 이미지가 없습니다. (증명 이미지만 있는 경우)"
         );
+        console.log("💡 Vision API 성공 여부와 관계없이 리뷰는 등록됩니다.");
       }
 
       // 인증 토큰 가져오기

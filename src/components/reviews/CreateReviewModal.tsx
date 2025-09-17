@@ -771,17 +771,32 @@ export default function CreateReviewModal({
         alert(`✅ 영수증 분석 완료!
 
 📝 추출된 정보:
-• 지역: ${locationToSet || info.parentLocation || info.location || "없음"}
+• 지역: ${
+          locationToSet ||
+          info.parentLocation ||
+          info.location ||
+          "자동 추출 실패"
+        }
 • 상호명: ${info.storeName || "없음"}
 • 날짜: ${info.date || "없음"}
 
-정보를 확인하고 필요시 수정해주세요.`);
+${
+  !locationToSet
+    ? "지역 정보를 수동으로 입력해주세요."
+    : "정보를 확인하고 필요시 수정해주세요."
+}`);
       } else {
-        console.error(
-          "모달 - API 응답에 success나 extractedText가 없음:",
+        console.warn(
+          "모달 - Vision API 응답에 success나 extractedText가 없음:",
           data
         );
-        throw new Error("텍스트 추출 실패");
+        // Vision API 실패해도 계속 진행 가능하도록 수정
+        alert(`⚠️ 영수증 분석에 실패했습니다.
+
+수동으로 여행지 정보를 입력해주세요.
+증명 이미지는 업로드되었으니 리뷰 작성을 계속 진행할 수 있습니다.`);
+        // 빈 extractedInfo 설정
+        setExtractedInfo({});
       }
     } catch (error) {
       console.error("모달 - 영수증 분석 상세 오류:", error);
@@ -801,7 +816,14 @@ export default function CreateReviewModal({
         }
       }
 
-      alert(`❌ ${errorMessage}\n\n수동으로 정보를 입력해주세요.`);
+      // Vision API 실패해도 리뷰 작성은 계속 진행 가능
+      alert(`⚠️ ${errorMessage}
+
+하지만 걱정하지 마세요! 
+증명 이미지는 정상적으로 업로드되었으니, 수동으로 여행지 정보를 입력하고 리뷰 작성을 계속 진행하실 수 있습니다.`);
+
+      // 빈 extractedInfo 설정 (오류 상황에서도)
+      setExtractedInfo({});
     } finally {
       setIsProcessing(false);
     }
@@ -988,8 +1010,22 @@ export default function CreateReviewModal({
     }
 
     if (!location.trim()) {
-      alert("여행지를 입력해주세요.");
-      return;
+      const confirmWithoutLocation = confirm(
+        "여행지 정보가 입력되지 않았습니다.\n\n증명 이미지에서 자동 추출에 실패한 것 같습니다.\n수동으로 여행지를 입력하시겠습니까?\n\n'취소'를 누르면 여행지 없이 리뷰를 등록합니다."
+      );
+
+      if (confirmWithoutLocation) {
+        // 사용자가 수동 입력을 원하는 경우 - 포커스를 여행지 필드로 이동
+        const locationInput = document.querySelector(
+          'input[placeholder*="여행지"]'
+        ) as HTMLInputElement;
+        if (locationInput) {
+          locationInput.focus();
+          locationInput.scrollIntoView({ behavior: "smooth", block: "center" });
+        }
+        return;
+      }
+      // 사용자가 여행지 없이 진행하기를 원하는 경우 - 계속 진행
     }
 
     // 필수 이미지 체크

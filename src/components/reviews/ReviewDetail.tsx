@@ -44,7 +44,8 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
   const [isCopied, setIsCopied] = useState(false);
 
   // 현재 로그인한 사용자 확인
-  const currentUser = typeof window !== "undefined" ? sessionStorage.getItem("nickname") : null;
+  const currentUser =
+    typeof window !== "undefined" ? sessionStorage.getItem("nickname") : null;
   const isOwner = currentUser === review.nickname;
 
   // 이미지 URL 처리
@@ -52,8 +53,26 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
 
   const getImageUrl = (imageUrl: string) => {
     if (!imageUrl) return "";
+
+    // S3 URL인 경우 직접 사용 (배포 환경에서 중요)
+    if (
+      imageUrl.startsWith(
+        "https://tour-tripai-bucket.s3.ap-northeast-2.amazonaws.com/"
+      ) ||
+      imageUrl.startsWith(
+        "https://s3.ap-northeast-2.amazonaws.com/tour-tripai-bucket/"
+      )
+    ) {
+      return imageUrl;
+    }
+
+    // 이미 절대 URL인 경우
     if (imageUrl.startsWith("http")) return imageUrl;
-    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://3.34.52.239:8080").replace(/\/$/, "");
+
+    // 서버 프록시를 통한 이미지 접근 (폴백)
+    const apiUrl = (
+      process.env.NEXT_PUBLIC_API_URL || "http://3.34.52.239:8080"
+    ).replace(/\/$/, "");
     if (imageUrl.startsWith("/")) {
       const finalUrl = `${apiUrl}${imageUrl}`;
       return finalUrl;
@@ -63,7 +82,9 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
   };
 
   // 유효한 이미지 필터링
-  const validImages = review.images?.filter((img) => !imageError[getImageUrl(img.imageUrl)]) || [];
+  const validImages =
+    review.images?.filter((img) => !imageError[getImageUrl(img.imageUrl)]) ||
+    [];
 
   // 클라이언트 사이드에서만 랜덤 값 설정
   useEffect(() => {
@@ -102,7 +123,9 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
   const handleLike = () => {
     setIsLiked(!isLiked);
     setLikeCount((prev) => (isLiked ? prev - 1 : prev + 1));
-    toast.success(isLiked ? "좋아요를 취소했습니다." : "이 리뷰가 도움이 되었습니다!");
+    toast.success(
+      isLiked ? "좋아요를 취소했습니다." : "이 리뷰가 도움이 되었습니다!"
+    );
   };
 
   const handleShare = () => {
@@ -132,7 +155,9 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
   };
 
   const prevImage = () => {
-    setSelectedImageIndex((prev) => (prev - 1 + validImages.length) % validImages.length);
+    setSelectedImageIndex(
+      (prev) => (prev - 1 + validImages.length) % validImages.length
+    );
   };
 
   return (
@@ -221,7 +246,10 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
           <div className="mb-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 rounded-xl overflow-hidden">
               {/* 메인 이미지 */}
-              <div className="relative aspect-[4/3] cursor-pointer" onClick={() => setShowLightbox(true)}>
+              <div
+                className="relative aspect-[4/3] cursor-pointer"
+                onClick={() => setShowLightbox(true)}
+              >
                 <Image
                   src={getImageUrl(validImages[selectedImageIndex].imageUrl)}
                   alt={review.title}
@@ -231,7 +259,8 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
                     const key = validImages[selectedImageIndex].imageUrl;
                     const u = getImageUrl(key);
                     handleImageError(u);
-                    if (process.env.NODE_ENV !== "production") console.error("[ReviewDetail] image onError:", u);
+                    if (process.env.NODE_ENV !== "production")
+                      console.error("[ReviewDetail] image onError:", u);
                   }}
                   priority
                   unoptimized
@@ -268,13 +297,16 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
                           const key = image.imageUrl;
                           const u = getImageUrl(key);
                           handleImageError(u);
-                          if (process.env.NODE_ENV !== "production") console.error("[ReviewDetail] thumb onError:", u);
+                          if (process.env.NODE_ENV !== "production")
+                            console.error("[ReviewDetail] thumb onError:", u);
                         }}
                         unoptimized
                       />
                       {index === 3 && validImages.length > 5 && (
                         <div className="absolute inset-0 bg-black/50 flex items-center justify-center text-white">
-                          <span className="text-xl font-medium">+{validImages.length - 5}장</span>
+                          <span className="text-xl font-medium">
+                            +{validImages.length - 5}장
+                          </span>
                         </div>
                       )}
                     </div>
@@ -303,7 +335,9 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
             {/* 리뷰 내용 */}
             <div className="py-8 border-b">
               <div className="prose prose-lg max-w-none">
-                <p className="whitespace-pre-line leading-relaxed text-gray-700">{review.content}</p>
+                <p className="whitespace-pre-line leading-relaxed text-gray-700">
+                  {review.content}
+                </p>
               </div>
             </div>
 
@@ -324,13 +358,19 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
               <div className="rounded-xl p-6 border border-gray-100">
                 <h3 className="font-semibold mb-4">평점 상세</h3>
                 <div className="flex items-center gap-4">
-                  <div className="text-3xl font-bold">{review.rating.toFixed(1)}</div>
+                  <div className="text-3xl font-bold">
+                    {review.rating.toFixed(1)}
+                  </div>
                   <div className="flex-1">
                     <div className="flex items-center gap-1">
                       {[1, 2, 3, 4, 5].map((star) => (
                         <FaStar
                           key={star}
-                          className={`text-lg ${star <= review.rating ? "text-yellow-400" : "text-gray-300"}`}
+                          className={`text-lg ${
+                            star <= review.rating
+                              ? "text-yellow-400"
+                              : "text-gray-300"
+                          }`}
                         />
                       ))}
                     </div>
@@ -369,7 +409,9 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
               {/* 작성자의 다른 리뷰 (UI만) */}
               <div className="rounded-xl p-6 border border-gray-100">
                 <h3 className="font-semibold mb-4">작성자의 다른 리뷰</h3>
-                <p className="text-sm text-gray-500">{review.nickname}님의 다른 리뷰를 준비 중입니다.</p>
+                <p className="text-sm text-gray-500">
+                  {review.nickname}님의 다른 리뷰를 준비 중입니다.
+                </p>
               </div>
             </div>
           </div>
@@ -438,8 +480,14 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
                 onClick={handleCopyLink}
                 className="w-full flex items-center justify-center gap-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
               >
-                {isCopied ? <FaCheck className="text-green-500" /> : <FaShare />}
-                <span>{isCopied ? "링크가 복사되었습니다!" : "링크 복사하기"}</span>
+                {isCopied ? (
+                  <FaCheck className="text-green-500" />
+                ) : (
+                  <FaShare />
+                )}
+                <span>
+                  {isCopied ? "링크가 복사되었습니다!" : "링크 복사하기"}
+                </span>
               </button>
 
               <div className="flex justify-center gap-4">
@@ -470,7 +518,13 @@ export default function ReviewDetail({ review }: ReviewDetailProps) {
             </div>
 
             <div className="space-y-3">
-              {["부적절한 내용", "스팸/광고", "개인정보 노출", "허위 정보", "기타"].map((reason) => (
+              {[
+                "부적절한 내용",
+                "스팸/광고",
+                "개인정보 노출",
+                "허위 정보",
+                "기타",
+              ].map((reason) => (
                 <label
                   key={reason}
                   className="flex items-center gap-3 p-3 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"

@@ -6,9 +6,17 @@
       "use": "@vercel/next"
     }
   ],
+  "functions": {
+    "src/app/api/reviews/create/route.ts": {
+      "maxDuration": 60
+    },
+    "src/app/api/vision/route.ts": {
+      "maxDuration": 30
+    }
+  },
   "github": {
     "enabled": true,
     "silent": false
   },
   "buildCommand": "DISABLE_ESLINT_PLUGIN=true next build"
-} 
+}

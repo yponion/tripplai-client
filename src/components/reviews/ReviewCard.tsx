@@ -13,21 +13,48 @@ interface ReviewCardProps {
 }
 
 export default function ReviewCard({ review }: ReviewCardProps) {
-  const { receiptReviewId, title, content, rating, createdAt, nickname, images } = review;
+  const {
+    receiptReviewId,
+    title,
+    content,
+    rating,
+    createdAt,
+    nickname,
+    images,
+  } = review;
   const [imgError, setImgError] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
 
-  // 이미지 URL에 서버 주소 추가
+  // 이미지 URL 처리 (S3 URL 우선, 서버 프록시 폴백)
   const getImageUrl = (imageUrl: string) => {
     if (!imageUrl) return "";
-    if (imageUrl.startsWith("http")) {
-      return imageUrl; // 이미 절대 URL인 경우
+
+    // S3 URL인 경우 직접 사용 (배포 환경에서 중요)
+    if (
+      imageUrl.startsWith(
+        "https://tour-tripai-bucket.s3.ap-northeast-2.amazonaws.com/"
+      ) ||
+      imageUrl.startsWith(
+        "https://s3.ap-northeast-2.amazonaws.com/tour-tripai-bucket/"
+      )
+    ) {
+      return imageUrl;
     }
-    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || "http://3.34.52.239:8080").replace(/\/$/, "");
+
+    // 이미 절대 URL인 경우 (기타 외부 URL)
+    if (imageUrl.startsWith("http")) {
+      return imageUrl;
+    }
+
+    // 서버 프록시를 통한 이미지 접근 (폴백)
+    const apiUrl = (
+      process.env.NEXT_PUBLIC_API_URL || "http://3.34.52.239:8080"
+    ).replace(/\/$/, "");
     if (!apiUrl) {
       console.warn("NEXT_PUBLIC_API_URL이 설정되지 않았습니다.");
       return imageUrl;
     }
+
     // 서버는 파일명만 반환하므로 /image/{파일명}으로 보정
     if (imageUrl.startsWith("/")) {
       const finalUrl = `${apiUrl}${imageUrl}`;
@@ -43,11 +70,15 @@ export default function ReviewCard({ review }: ReviewCardProps) {
         {Array.from({ length: 5 }).map((_, index) => (
           <FaStar
             key={index}
-            className={`transition-colors ${index < Math.floor(rating) ? "text-yellow-400" : "text-gray-200"}`}
+            className={`transition-colors ${
+              index < Math.floor(rating) ? "text-yellow-400" : "text-gray-200"
+            }`}
             size={16}
           />
         ))}
-        <span className="ml-2 text-sm font-medium text-gray-700">{rating.toFixed(1)}</span>
+        <span className="ml-2 text-sm font-medium text-gray-700">
+          {rating.toFixed(1)}
+        </span>
       </div>
     );
   };
@@ -81,7 +112,10 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                     onError={(e) => {
                       setImgError(true);
                       if (process.env.NODE_ENV !== "production")
-                        console.error("[ReviewCard] image onError:", (e as any)?.currentTarget?.src);
+                        console.error(
+                          "[ReviewCard] image onError:",
+                          (e as any)?.currentTarget?.src
+                        );
                     }}
                     onLoad={() => setImageLoading(false)}
                     priority
@@ -91,7 +125,12 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                   <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-pink-50 to-rose-100">
                     <div className="text-center">
                       <div className="w-16 h-16 mx-auto mb-2 bg-pink-200 rounded-full flex items-center justify-center">
-                        <svg className="w-8 h-8 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg
+                          className="w-8 h-8 text-pink-400"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
                           <path
                             strokeLinecap="round"
                             strokeLinejoin="round"
@@ -100,7 +139,9 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                           />
                         </svg>
                       </div>
-                      <span className="text-pink-400 text-sm font-medium">여행 리뷰</span>
+                      <span className="text-pink-400 text-sm font-medium">
+                        여행 리뷰
+                      </span>
                     </div>
                   </div>
                 )}
@@ -109,7 +150,12 @@ export default function ReviewCard({ review }: ReviewCardProps) {
               <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
                 <div className="text-center">
                   <div className="w-16 h-16 mx-auto mb-2 bg-gray-300 rounded-full flex items-center justify-center">
-                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg
+                      className="w-8 h-8 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
                       <path
                         strokeLinecap="round"
                         strokeLinejoin="round"
@@ -135,7 +181,9 @@ export default function ReviewCard({ review }: ReviewCardProps) {
               <div className="bg-white/90 backdrop-blur-sm rounded-lg px-3 py-1.5 shadow-lg">
                 <div className="flex items-center space-x-1">
                   <FaStar className="text-yellow-500 text-sm" />
-                  <span className="text-sm font-semibold text-gray-900">{rating.toFixed(1)}</span>
+                  <span className="text-sm font-semibold text-gray-900">
+                    {rating.toFixed(1)}
+                  </span>
                 </div>
               </div>
             </div>
@@ -149,7 +197,9 @@ export default function ReviewCard({ review }: ReviewCardProps) {
             </h3>
 
             {/* 내용 미리보기 */}
-            <p className="text-gray-600 text-sm line-clamp-2 mb-4 leading-relaxed">{content}</p>
+            <p className="text-gray-600 text-sm line-clamp-2 mb-4 leading-relaxed">
+              {content}
+            </p>
 
             {/* 메타 정보 */}
             <div className="flex items-center justify-between pt-3 border-t border-gray-100">
@@ -159,8 +209,12 @@ export default function ReviewCard({ review }: ReviewCardProps) {
                   {nickname.charAt(0).toUpperCase()}
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-900">{nickname}</p>
-                  <p className="text-xs text-gray-500">{formatDate(createdAt)}</p>
+                  <p className="text-sm font-medium text-gray-900">
+                    {nickname}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    {formatDate(createdAt)}
+                  </p>
                 </div>
               </div>
 

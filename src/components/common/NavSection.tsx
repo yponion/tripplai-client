@@ -29,8 +29,62 @@ const NavSection = () => {
   const [isFestivalMenuOpen, setIsFestivalMenuOpen] = useState(false);
   const [isPlanMenuOpen, setIsPlanMenuOpen] = useState(false);
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [userNickname, setUserNickname] = useState("");
   const { themeMode, cycleTheme, isLoading } = useThemeMode();
   const planMenuRef = useRef<HTMLDivElement | null>(null);
+
+  // 로그인 상태 확인 (클라이언트에서만 실행)
+  useEffect(() => {
+    const checkLoginStatus = () => {
+      try {
+        const accessToken = sessionStorage.getItem("accessToken");
+        if (accessToken) {
+          const decoded = jwtDecode(accessToken);
+          const userInfo = JSON.parse(decoded.sub!);
+          setIsLoggedIn(true);
+          setUserNickname(userInfo.nickname || "사용자");
+        } else {
+          setIsLoggedIn(false);
+          setUserNickname("");
+        }
+      } catch (error) {
+        console.error("토큰 검증 실패:", error);
+        setIsLoggedIn(false);
+        setUserNickname("");
+        // 잘못된 토큰 제거
+        sessionStorage.removeItem("accessToken");
+        sessionStorage.removeItem("refreshToken");
+      }
+    };
+
+    // 초기 로그인 상태 확인
+    checkLoginStatus();
+
+    // sessionStorage 변경 감지 (다른 탭에서 로그인/로그아웃 시)
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === "accessToken") {
+        checkLoginStatus();
+      }
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // 현재 탭에서의 sessionStorage 변경 감지를 위한 커스텀 이벤트
+    const handleCustomStorageChange = () => {
+      checkLoginStatus();
+    };
+
+    window.addEventListener("sessionStorageChange", handleCustomStorageChange);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      window.removeEventListener(
+        "sessionStorageChange",
+        handleCustomStorageChange
+      );
+    };
+  }, []);
 
   // 스크롤 이벤트 리스너
   useEffect(() => {
@@ -405,7 +459,7 @@ const NavSection = () => {
               </div>
             )}
           </div>
-          {!sessionStorage.getItem("accessToken") ? (
+          {!isLoggedIn ? (
             <Button
               variant="outline"
               size="sm"
@@ -426,21 +480,13 @@ const NavSection = () => {
               size="sm"
               className="ml-1 flex items-center gap-2"
               onClick={handleLoginClick}
-              aria-label={
-                JSON.parse(
-                  jwtDecode(sessionStorage.getItem("accessToken")!).sub!
-                ).nickname
-              }
+              aria-label={userNickname}
             >
               <FaUserCircle className={getUserIconClasses()} />
               <span
                 className={`hidden md:block text-sm font-semibold whitespace-nowrap ${getDashboardTextClass()}`}
               >
-                {
-                  JSON.parse(
-                    jwtDecode(sessionStorage.getItem("accessToken")!).sub!
-                  ).nickname
-                }
+                {userNickname}
               </span>
             </Button>
           )}

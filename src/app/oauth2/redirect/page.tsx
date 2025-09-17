@@ -15,20 +15,77 @@ export default function Redirect() {
         const status = searchParams.get("status");
 
         if (status === "success") {
-          // 성공 시 쿠키에서 토큰 가져오기
-          const accessToken = Cookies.get("accessToken");
-          const refreshToken = Cookies.get("refreshToken");
+          // URL 파라미터에서 Base64 인코딩된 토큰 가져오기 (크로스 도메인 문제 해결)
+          const encodedAccessToken = searchParams.get("token");
+          const encodedRefreshToken = searchParams.get("refresh");
 
-          if (accessToken) {
-            // 세션 스토리지에 토큰 저장
-            sessionStorage.setItem("accessToken", accessToken);
-            if (refreshToken) {
-              sessionStorage.setItem("refreshToken", refreshToken);
+          let finalAccessToken = null;
+          let finalRefreshToken = null;
+
+          // 1순위: URL 파라미터에서 토큰 디코딩 (배포 환경)
+          if (encodedAccessToken) {
+            try {
+              finalAccessToken = atob(encodedAccessToken); // Base64 디코딩
+              console.log("🌐 URL 파라미터에서 Access Token 획득");
+            } catch (e) {
+              console.error("Access token 디코딩 실패:", e);
             }
+          }
+
+          if (encodedRefreshToken) {
+            try {
+              finalRefreshToken = atob(encodedRefreshToken); // Base64 디코딩
+              console.log("🌐 URL 파라미터에서 Refresh Token 획득");
+            } catch (e) {
+              console.error("Refresh token 디코딩 실패:", e);
+            }
+          }
+
+          // 2순위: 쿠키에서 확인 (로컬 환경 호환성)
+          if (!finalAccessToken) {
+            const cookieAccessToken = Cookies.get("accessToken");
+            if (cookieAccessToken) {
+              finalAccessToken = cookieAccessToken;
+              console.log("🍪 쿠키에서 Access Token 획득");
+            }
+          }
+
+          if (!finalRefreshToken) {
+            const cookieRefreshToken = Cookies.get("refreshToken");
+            if (cookieRefreshToken) {
+              finalRefreshToken = cookieRefreshToken;
+              console.log("🍪 쿠키에서 Refresh Token 획득");
+            }
+          }
+
+          if (finalAccessToken) {
+            console.log("✅ 토큰 처리 시작");
+            console.log("🔑 Access Token 길이:", finalAccessToken.length);
+            console.log("🔑 Refresh Token 존재:", !!finalRefreshToken);
+
+            // 세션 스토리지에 토큰 저장
+            sessionStorage.setItem("accessToken", finalAccessToken);
+            if (finalRefreshToken) {
+              sessionStorage.setItem("refreshToken", finalRefreshToken);
+            }
+
+            // 저장 확인
+            const savedToken = sessionStorage.getItem("accessToken");
+            console.log("💾 세션스토리지 저장 확인:", !!savedToken);
+
+            // NavSection 컴포넌트에 로그인 상태 변경 알림
+            window.dispatchEvent(new Event("sessionStorageChange"));
+            console.log("📢 상태 변경 이벤트 발송 완료");
 
             // 쿠키 삭제 (보안상 이유)
             Cookies.remove("accessToken");
             Cookies.remove("refreshToken");
+
+            // URL에서 토큰 파라미터 제거 (보안상 이유)
+            const cleanUrl = new URL(window.location.href);
+            cleanUrl.searchParams.delete("token");
+            cleanUrl.searchParams.delete("refresh");
+            window.history.replaceState({}, "", cleanUrl.toString());
 
             // 성공 메시지 표시 후 홈으로 리다이렉트
             setTimeout(() => {

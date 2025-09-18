@@ -59,7 +59,7 @@ export const gatheringService = {
       content: (data.content || []).map((g: any) => ({
         id: g.id,
         title: g.title,
-        content: g.description,
+        content: g.content || g.description, // content 우선, description 폴백
         author: g.authorNickname || g.authorEmail,
         authorId: g.authorId,
         authorEmail: g.authorEmail,
@@ -79,7 +79,7 @@ export const gatheringService = {
     return {
       id: g.id,
       title: g.title,
-      content: g.description,
+      content: g.content || g.description, // content 우선, description 폴백
       author: g.authorNickname || g.authorEmail,
       authorId: g.authorId,
       authorEmail: g.authorEmail,
@@ -94,13 +94,15 @@ export const gatheringService = {
     content: string;
     maxCount?: number;
   }): Promise<GatheringPost> {
+    console.log("[GatheringService] 생성 요청 데이터:", data);
     const res = await gatheringApi.post("/api/group", {
       title: data.title,
-      description: data.content,
+      content: data.content, // description이 아닌 content로 변경
       maxCount: data.maxCount ?? 10,
     });
+    console.log("[GatheringService] 생성 응답:", res.data);
     const r = res.data;
-    return { id: r.groupId, title: data.title, content: data.content };
+    return { id: r.id || r.groupId, title: data.title, content: data.content };
   },
 
   async update(
@@ -109,7 +111,7 @@ export const gatheringService = {
   ): Promise<GatheringPost> {
     const res = await gatheringApi.put(`/api/group/${id}`, {
       title: data.title,
-      description: data.content,
+      content: data.content, // description이 아닌 content로 변경
       maxCount: data.maxCount ?? 10,
     });
     void res;
@@ -118,5 +120,45 @@ export const gatheringService = {
 
   async remove(id: number): Promise<void> {
     await gatheringApi.delete(`/api/group/${id}`);
+  },
+
+  // 그룹 참가
+  async participate(id: number): Promise<void> {
+    await gatheringApi.put(`/api/group/${id}/participate`);
+  },
+
+  // 그룹 허가
+  async permit(id: number, enrollId?: number): Promise<void> {
+    const url = enrollId
+      ? `/api/group/${id}/permit?enrollId=${enrollId}`
+      : `/api/group/${id}/permit`;
+    await gatheringApi.put(url);
+  },
+
+  // 그룹 탈퇴
+  async leave(id: number): Promise<void> {
+    await gatheringApi.put(`/api/group/${id}/leave`);
+  },
+
+  // 그룹 참여인원 조회
+  async getParticipants(id: number): Promise<any[]> {
+    const res = await gatheringApi.get(`/api/group/${id}/participate`);
+    return res.data;
+  },
+
+  // 그룹 신청인원 조회
+  async getApplicants(id: number): Promise<any[]> {
+    const res = await gatheringApi.get(`/api/group/${id}/apply`);
+    return res.data;
+  },
+
+  // 그룹 좋아요
+  async like(id: number): Promise<void> {
+    await gatheringApi.post(`/api/group/${id}/like`);
+  },
+
+  // 그룹 좋아요 취소
+  async unlike(id: number): Promise<void> {
+    await gatheringApi.delete(`/api/group/${id}/like`);
   },
 };

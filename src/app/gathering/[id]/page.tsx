@@ -7,6 +7,7 @@ import { gatheringService, GatheringPost } from "@/services/gatheringService";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatDate } from "@/utils/dateUtils";
+import { Heart, Users, UserCheck, UserX } from "lucide-react";
 
 export default function GatheringDetailPage() {
   const router = useRouter();
@@ -20,15 +21,45 @@ export default function GatheringDetailPage() {
   const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [currentMemberId, setCurrentMemberId] = useState<number | null>(null);
+  const [isParticipating, setIsParticipating] = useState(false);
+  const [isLiked, setIsLiked] = useState(false);
+  const [participants, setParticipants] = useState<any[]>([]);
+  const [applicants, setApplicants] = useState<any[]>([]);
+  const [showApplicants, setShowApplicants] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!id) return;
-    gatheringService.get(id).then((p) => {
-      setPost(p);
-      setTitle(p.title);
-      setContent(p.content);
-    });
-  }, [id]);
+    const loadData = async () => {
+      try {
+        // 게시글 정보 가져오기
+        const p = await gatheringService.get(id);
+        setPost(p);
+        setTitle(p.title);
+        setContent(p.content);
+
+        // 참여자 목록 가져오기
+        try {
+          const participantsList = await gatheringService.getParticipants(id);
+          setParticipants(participantsList);
+
+          // 현재 사용자가 참여중인지 확인
+          if (currentMemberId) {
+            const isInGroup = participantsList.some(
+              (p: any) =>
+                p.enrollId === currentMemberId || p.id === currentMemberId
+            );
+            setIsParticipating(isInGroup);
+          }
+        } catch (error) {
+          console.error("참여자 목록 조회 실패:", error);
+        }
+      } catch (error) {
+        console.error("게시글 조회 실패:", error);
+      }
+    };
+    loadData();
+  }, [id, currentMemberId]);
 
   useEffect(() => {
     try {
@@ -66,6 +97,84 @@ export default function GatheringDetailPage() {
     await gatheringService.remove(post.id);
     setDeleting(false);
     router.push("/gathering");
+  };
+
+  // 신청자 목록 가져오기
+  const loadApplicants = async () => {
+    if (!post) return;
+    try {
+      const list = await gatheringService.getApplicants(post.id);
+      setApplicants(list);
+    } catch (error) {
+      console.error("신청자 목록 조회 실패:", error);
+    }
+  };
+
+  // 그룹 참가 신청
+  const handleParticipate = async () => {
+    if (!post || loading) return;
+    setLoading(true);
+    try {
+      await gatheringService.participate(post.id);
+      alert("참가 신청이 완료되었습니다!");
+      // 페이지 새로고침
+      window.location.reload();
+    } catch (error) {
+      console.error("참가 신청 실패:", error);
+      alert("참가 신청에 실패했습니다.");
+    }
+    setLoading(false);
+  };
+
+  // 그룹 탈퇴
+  const handleLeave = async () => {
+    if (!post || loading) return;
+    const ok = confirm("정말 탈퇴하시겠습니까?");
+    if (!ok) return;
+    setLoading(true);
+    try {
+      await gatheringService.leave(post.id);
+      alert("탈퇴가 완료되었습니다.");
+      window.location.reload();
+    } catch (error) {
+      console.error("탈퇴 실패:", error);
+      alert("탈퇴에 실패했습니다.");
+    }
+    setLoading(false);
+  };
+
+  // 신청 허가
+  const handlePermit = async (enrollId: number) => {
+    if (!post || loading) return;
+    setLoading(true);
+    try {
+      await gatheringService.permit(post.id, enrollId);
+      alert("신청을 수락했습니다.");
+      loadApplicants();
+      window.location.reload();
+    } catch (error) {
+      console.error("허가 실패:", error);
+      alert("신청 수락에 실패했습니다.");
+    }
+    setLoading(false);
+  };
+
+  // 좋아요 토글
+  const handleLikeToggle = async () => {
+    if (!post || loading) return;
+    setLoading(true);
+    try {
+      if (isLiked) {
+        await gatheringService.unlike(post.id);
+      } else {
+        await gatheringService.like(post.id);
+      }
+      setIsLiked(!isLiked);
+    } catch (error) {
+      console.error("좋아요 실패:", error);
+      alert("좋아요 처리에 실패했습니다.");
+    }
+    setLoading(false);
   };
 
   return (
@@ -142,6 +251,22 @@ export default function GatheringDetailPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-2">
+                      {/* 좋아요 버튼 - 로그인한 사용자만 */}
+                      {currentMemberId && (
+                        <Button
+                          variant={isLiked ? "primary" : "outline"}
+                          size="sm"
+                          onClick={handleLikeToggle}
+                          disabled={loading}
+                        >
+                          <Heart
+                            className={`w-4 h-4 ${
+                              isLiked ? "fill-current" : ""
+                            }`}
+                          />
+                        </Button>
+                      )}
+
                       <Button
                         variant="outline"
                         size="sm"
@@ -157,10 +282,23 @@ export default function GatheringDetailPage() {
                       >
                         {copied ? "복사됨" : "링크 복사"}
                       </Button>
+
+                      {/* 작성자 전용 버튼 */}
                       {post?.authorId &&
                         currentMemberId &&
                         Number(post.authorId) === Number(currentMemberId) && (
                           <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setShowApplicants(!showApplicants);
+                                if (!showApplicants) loadApplicants();
+                              }}
+                            >
+                              <Users className="w-4 h-4 mr-1" />
+                              신청자 관리
+                            </Button>
                             <Button
                               variant="outline"
                               size="sm"
@@ -178,6 +316,35 @@ export default function GatheringDetailPage() {
                             </Button>
                           </>
                         )}
+
+                      {/* 일반 유저 버튼 - 작성자가 아닌 경우만 */}
+                      {currentMemberId &&
+                        post?.authorId &&
+                        Number(post.authorId) !== Number(currentMemberId) && (
+                          <>
+                            {isParticipating ? (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={handleLeave}
+                                disabled={loading}
+                              >
+                                <UserX className="w-4 h-4 mr-1" />
+                                탈퇴하기
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="primary"
+                                size="sm"
+                                onClick={handleParticipate}
+                                disabled={loading}
+                              >
+                                <UserCheck className="w-4 h-4 mr-1" />
+                                참가 신청
+                              </Button>
+                            )}
+                          </>
+                        )}
                     </div>
                   </div>
 
@@ -185,6 +352,74 @@ export default function GatheringDetailPage() {
 
                   <div className="whitespace-pre-line text-gray-800 leading-relaxed text-base">
                     {post.content}
+                  </div>
+
+                  {/* 신청자 목록 - 작성자만 볼 수 있음 */}
+                  {showApplicants &&
+                    post?.authorId &&
+                    currentMemberId &&
+                    Number(post.authorId) === Number(currentMemberId) && (
+                      <div className="mt-6 p-4 bg-gray-50 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-3">
+                          신청자 목록
+                        </h3>
+                        {applicants.length === 0 ? (
+                          <p className="text-gray-500">
+                            아직 신청자가 없습니다.
+                          </p>
+                        ) : (
+                          <div className="space-y-2">
+                            {applicants.map((applicant: any) => (
+                              <div
+                                key={applicant.enrollId}
+                                className="flex items-center justify-between p-3 bg-white rounded border"
+                              >
+                                <div>
+                                  <span className="font-medium">
+                                    {applicant.nickname || applicant.email}
+                                  </span>
+                                  <span className="text-sm text-gray-500 ml-2">
+                                    {applicant.accepted === false && "(대기중)"}
+                                  </span>
+                                </div>
+                                {!applicant.accepted && (
+                                  <Button
+                                    variant="primary"
+                                    size="sm"
+                                    onClick={() =>
+                                      handlePermit(applicant.enrollId)
+                                    }
+                                    disabled={loading}
+                                  >
+                                    수락
+                                  </Button>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                  {/* 참여자 목록 */}
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                    <h3 className="text-lg font-semibold mb-3">
+                      참여자 목록 ({participants.length}명)
+                    </h3>
+                    {participants.length === 0 ? (
+                      <p className="text-gray-500">아직 참여자가 없습니다.</p>
+                    ) : (
+                      <div className="flex flex-wrap gap-2">
+                        {participants.map((participant: any) => (
+                          <div
+                            key={participant.enrollId || participant.id}
+                            className="px-3 py-1 bg-white rounded-full text-sm"
+                          >
+                            {participant.nickname || participant.email}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
 
                   <div className="mt-8 flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">

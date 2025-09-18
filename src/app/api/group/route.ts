@@ -57,21 +57,41 @@ export async function POST(request: NextRequest) {
     const accessToken = request.headers.get("authorization");
     const cookies = request.headers.get("cookie");
 
+    // 디버깅: 토큰 확인
+    console.log("[Proxy] accessToken:", accessToken ? "있음" : "없음");
+    console.log("[Proxy] cookies:", cookies ? "있음" : "없음");
+
+    // 요청 헤더 설정
+    const headers: HeadersInit = {
+      "Content-Type": "application/json",
+    };
+
+    // accessToken이 있으면 추가
+    if (accessToken) {
+      headers.Authorization = accessToken;
+    }
+
+    // 쿠키가 있으면 추가 (refreshToken 포함)
+    if (cookies) {
+      headers.Cookie = cookies;
+    }
+
     const response = await fetch(`${API_URL}/api/group`, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(accessToken && { Authorization: accessToken }),
-        ...(cookies && { Cookie: cookies }),
-      },
+      headers,
       body: JSON.stringify(body),
       credentials: "include",
       redirect: "manual", // 302 리다이렉트 수동 처리
     });
 
+    // 응답 상태 로그
+    console.log("[Proxy] Response status:", response.status);
+
     // 302 리다이렉트는 인증 실패를 의미
     if (response.status === 302 || response.status === 301) {
       console.error("[Proxy] 인증 실패 - 302 리다이렉트");
+      const location = response.headers.get("location");
+      console.error("[Proxy] Redirect to:", location);
       return NextResponse.json(
         { error: "로그인이 필요합니다." },
         { status: 401 }

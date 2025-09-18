@@ -6,6 +6,7 @@ const isHttps =
   typeof window !== "undefined" && window.location.protocol === "https:";
 const gatheringApi = isHttps
   ? axios.create({
+      baseURL: "", // 현재 도메인 사용 (프록시는 같은 도메인)
       headers: {
         "Content-Type": "application/json",
       },
@@ -16,7 +17,15 @@ const gatheringApi = isHttps
 if (isHttps) {
   gatheringApi.interceptors.request.use(async (config) => {
     const accessToken = sessionStorage.getItem("accessToken");
-    if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+    if (accessToken) {
+      config.headers.Authorization = `Bearer ${accessToken}`;
+      console.log(
+        "[GatheringService] Token 추가됨:",
+        accessToken.substring(0, 20) + "..."
+      );
+    } else {
+      console.log("[GatheringService] Token 없음!");
+    }
     return config;
   });
 }

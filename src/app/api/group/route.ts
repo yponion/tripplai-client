@@ -7,12 +7,14 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const accessToken = request.headers.get("authorization");
-    
+    const cookies = request.headers.get("cookie");
+
     const response = await fetch(`${API_URL}/api/group?${searchParams}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
         ...(accessToken && { Authorization: accessToken }),
+        ...(cookies && { Cookie: cookies }),
       },
       credentials: "include",
     });
@@ -42,12 +44,14 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const accessToken = request.headers.get("authorization");
-    
+    const cookies = request.headers.get("cookie");
+
     const response = await fetch(`${API_URL}/api/group`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         ...(accessToken && { Authorization: accessToken }),
+        ...(cookies && { Cookie: cookies }),
       },
       body: JSON.stringify(body),
       credentials: "include",

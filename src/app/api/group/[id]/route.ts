@@ -10,12 +10,14 @@ export async function GET(
   try {
     const { id } = await params;
     const accessToken = request.headers.get("authorization");
+    const cookies = request.headers.get("cookie");
 
     const response = await fetch(`${API_URL}/api/group/${id}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
         ...(accessToken && { Authorization: accessToken }),
+        ...(cookies && { Cookie: cookies }),
       },
       credentials: "include",
     });
@@ -49,12 +51,14 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
     const accessToken = request.headers.get("authorization");
+    const cookies = request.headers.get("cookie");
 
     const response = await fetch(`${API_URL}/api/group/${id}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
         ...(accessToken && { Authorization: accessToken }),
+        ...(cookies && { Cookie: cookies }),
       },
       body: JSON.stringify(body),
       credentials: "include",
@@ -88,12 +92,14 @@ export async function DELETE(
   try {
     const { id } = await params;
     const accessToken = request.headers.get("authorization");
+    const cookies = request.headers.get("cookie");
 
     const response = await fetch(`${API_URL}/api/group/${id}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
         ...(accessToken && { Authorization: accessToken }),
+        ...(cookies && { Cookie: cookies }),
       },
       credentials: "include",
     });

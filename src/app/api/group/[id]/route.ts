@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://3.34.52.239:8080";
+// Spring Boot 서버 URL (HTTPS 필수!)
+const API_URL = "https://tripplanner.p-e.kr";
 
 // GET /api/group/:id - 조회
 export async function GET(

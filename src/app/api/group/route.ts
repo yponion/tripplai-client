@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://3.34.52.239:8080";
+// Spring Boot 서버 URL (HTTPS 필수!)
+const API_URL = "https://tripplanner.p-e.kr";
 
 // GET /api/group - 목록 조회
 export async function GET(request: NextRequest) {
@@ -17,7 +18,17 @@ export async function GET(request: NextRequest) {
         ...(cookies && { Cookie: cookies }),
       },
       credentials: "include",
+      redirect: "manual", // 302 리다이렉트 수동 처리
     });
+
+    // 302 리다이렉트는 인증 실패를 의미
+    if (response.status === 302 || response.status === 301) {
+      console.error("[Proxy] 인증 실패 - 302 리다이렉트");
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -55,7 +66,17 @@ export async function POST(request: NextRequest) {
       },
       body: JSON.stringify(body),
       credentials: "include",
+      redirect: "manual", // 302 리다이렉트 수동 처리
     });
+
+    // 302 리다이렉트는 인증 실패를 의미
+    if (response.status === 302 || response.status === 301) {
+      console.error("[Proxy] 인증 실패 - 302 리다이렉트");
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

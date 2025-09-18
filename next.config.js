@@ -4,9 +4,7 @@ const path = require("path");
 const nextConfig = {
   transpilePackages: ["@chakra-ui/react", "@chakra-ui/next-js"],
   // 파일 업로드 크기 제한 설정 (Vercel 배포용)
-  experimental: {
-    serverComponentsExternalPackages: [],
-  },
+  serverExternalPackages: [],
   images: {
     remotePatterns: [
       { protocol: "https", hostname: "randomuser.me" },

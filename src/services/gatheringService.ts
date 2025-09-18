@@ -1,4 +1,25 @@
 import { api } from "./api";
+import axios from "axios";
+
+// HTTPS 환경에서는 프록시 사용
+const isHttps =
+  typeof window !== "undefined" && window.location.protocol === "https:";
+const gatheringApi = isHttps
+  ? axios.create({
+      headers: {
+        "Content-Type": "application/json",
+      },
+    })
+  : api;
+
+// Request interceptor for adding auth token (프록시 사용 시)
+if (isHttps) {
+  gatheringApi.interceptors.request.use(async (config) => {
+    const accessToken = sessionStorage.getItem("accessToken");
+    if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+    return config;
+  });
+}
 
 export interface GatheringPost {
   id: number;
@@ -21,7 +42,9 @@ export interface PageResponse<T> {
 
 export const gatheringService = {
   async list(page = 0, size = 10): Promise<PageResponse<GatheringPost>> {
-    const res = await api.get("/api/group", { params: { page, size } });
+    const res = await gatheringApi.get("/api/group", {
+      params: { page, size },
+    });
     const data = res.data;
     return {
       content: (data.content || []).map((g: any) => ({
@@ -42,7 +65,7 @@ export const gatheringService = {
   },
 
   async get(id: number): Promise<GatheringPost> {
-    const res = await api.get(`/api/group/${id}`);
+    const res = await gatheringApi.get(`/api/group/${id}`);
     const g = res.data;
     return {
       id: g.id,
@@ -62,7 +85,7 @@ export const gatheringService = {
     content: string;
     maxCount?: number;
   }): Promise<GatheringPost> {
-    const res = await api.post("/api/group", {
+    const res = await gatheringApi.post("/api/group", {
       title: data.title,
       description: data.content,
       maxCount: data.maxCount ?? 10,
@@ -75,7 +98,7 @@ export const gatheringService = {
     id: number,
     data: { title: string; content: string; maxCount?: number }
   ): Promise<GatheringPost> {
-    const res = await api.put(`/api/group/${id}`, {
+    const res = await gatheringApi.put(`/api/group/${id}`, {
       title: data.title,
       description: data.content,
       maxCount: data.maxCount ?? 10,
@@ -85,6 +108,6 @@ export const gatheringService = {
   },
 
   async remove(id: number): Promise<void> {
-    await api.delete(`/api/group/${id}`);
+    await gatheringApi.delete(`/api/group/${id}`);
   },
 };

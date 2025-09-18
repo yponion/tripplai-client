@@ -3,7 +3,6 @@
 import { getDaysForMonth, getDate } from "@/utils/dateUtils";
 import clsx from "clsx";
 import { useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { FestivalResponse } from "@/types/festival";
 import getFestivals from "../../_services/getFestivals";
@@ -17,7 +16,7 @@ export default function Calendar() {
   const [currentMonthIndex, setCurrentMonthIndex] = useState(0);
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
-  const [submittedQuery, setSubmittedQuery] = useState(""); // 🔥 확정된 검색어
+  const [submittedQuery, setSubmittedQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
   const { data, isLoading, error } = useQuery<FestivalResponse>({
@@ -29,7 +28,7 @@ export default function Calendar() {
     return (
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-12">
         <div className="animate-pulse space-y-6">
-          <div className="h-40 rounded-2xl bg-gradient-to-r from-purple-100 to-indigo-100" />
+          <div className="h-40 rounded-2xl bg-gradient-to-r from-rose-100 to-pink-100" />
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
               <div key={i} className="h-64 bg-gray-100 rounded-xl" />
@@ -38,6 +37,7 @@ export default function Calendar() {
         </div>
       </div>
     );
+
   if (error)
     return (
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-12">
@@ -65,6 +65,7 @@ export default function Calendar() {
   const sortedItems = items?.sort(
     (a, b) => Number(a.eventstartdate) - Number(b.eventstartdate)
   );
+
   const toDateStr = (d: number) =>
     `${year}${String(month).padStart(2, "0")}${String(d).padStart(2, "0")}`;
   const validDaysInMonth = allDays.filter(
@@ -129,7 +130,7 @@ export default function Calendar() {
       matchesSearch = title.includes(keyword) || addr.includes(keyword);
     }
 
-    // 날짜 필터링 - 선택된 날짜가 축제 기간에 포함되는지 확인
+    // 날짜 필터링
     if (selectedDate) {
       matchesDate =
         festival.eventstartdate <= selectedDate &&
@@ -150,26 +151,22 @@ export default function Calendar() {
         item.eventenddate >= monthStartStr && item.eventstartdate <= monthEndStr
     )
     .slice(0, 30);
-  // 축제 정렬: 선택된 날짜가 있을 때는 시작일이 가까운 순서대로 정렬
+
+  // 축제 정렬
   const getSortedFestivals = (festivals: typeof filteredFestivals) => {
     if (!festivals) return [];
 
     if (selectedDate) {
       return [...festivals].sort((a, b) => {
-        // 축제 기간 계산 (일 단위)
         const aDuration = parseInt(a.eventenddate) - parseInt(a.eventstartdate);
         const bDuration = parseInt(b.eventenddate) - parseInt(b.eventstartdate);
 
-        // 1년 이상 진행되는 축제 (365일 = 10000 정도의 차이)
         const isLongA = aDuration > 10000;
         const isLongB = bDuration > 10000;
 
-        // 긴 축제는 아래로
         if (isLongA && !isLongB) return 1;
         if (!isLongA && isLongB) return -1;
 
-        // 둘 다 긴 축제이거나 둘 다 짧은 축제인 경우
-        // 선택된 날짜와 시작일의 거리로 정렬
         const aDistance = Math.abs(
           parseInt(a.eventstartdate) - parseInt(selectedDate)
         );
@@ -181,13 +178,11 @@ export default function Calendar() {
       });
     }
 
-    // 날짜 선택이 없으면 기존 정렬 (시작일 순)
     return [...festivals].sort(
       (a, b) => parseInt(a.eventstartdate) - parseInt(b.eventstartdate)
     );
   };
 
-  // 날짜가 선택되었거나 검색어가 있으면 필터된 결과, 없으면 월별 하이라이트
   const rawListItems =
     selectedDate || submittedQuery.trim() ? filteredFestivals : monthHighlights;
   const listItems = getSortedFestivals(rawListItems);
@@ -244,10 +239,10 @@ export default function Calendar() {
         </div>
       </div>
 
-      {/* 2열 레이아웃: 달력(좌) + 리스트(우) */}
+      {/* 2열 레이아웃 */}
       <div className="lg:grid lg:grid-cols-12 lg:gap-8">
+        {/* 달력 */}
         <section className="lg:col-span-5">
-          {/* 달력 */}
           <div className="rounded-2xl border border-gray-200 overflow-hidden shadow-sm bg-white lg:h-[70vh] flex flex-col">
             <div className="grid grid-cols-7 bg-gray-50/60 text-center text-xs sm:text-sm font-semibold text-gray-700">
               {days.map((day, i) => (
@@ -268,14 +263,8 @@ export default function Calendar() {
               {weeks.map((week, weekIdx) =>
                 week.map((day, i) => {
                   const isValidDay = typeof day === "number" && !isNaN(day);
-                  const dateStr = isValidDay
-                    ? `${year}${String(month).padStart(2, "0")}${String(
-                        day
-                      ).padStart(2, "0")}`
-                    : "";
-
+                  const dateStr = isValidDay ? toDateStr(day) : "";
                   const count = isValidDay ? countsByDate[dateStr] || 0 : 0;
-
                   const isSelected = selectedDate === dateStr;
                   const isToday = isValidDay && dateStr === getDate();
                   const isWeekend = i === 0 || i === 6;
@@ -284,18 +273,9 @@ export default function Calendar() {
                     <div
                       key={`${weekIdx}-${i}`}
                       onClick={() => isValidDay && handleDateClick(day)}
-                      onKeyDown={(e) => {
-                        if (!isValidDay) return;
-                        if (e.key === "Enter" || e.key === " ") {
-                          e.preventDefault();
-                          handleDateClick(day);
-                        }
-                      }}
                       role={isValidDay ? "button" : undefined}
                       tabIndex={isValidDay ? 0 : -1}
-                      aria-pressed={
-                        isValidDay ? (isSelected ? true : false) : undefined
-                      }
+                      aria-pressed={isValidDay ? isSelected : undefined}
                       className={clsx(
                         "group relative p-2 sm:p-3 border border-gray-100 transition min-h-0 flex flex-col",
                         !isValidDay
@@ -356,8 +336,8 @@ export default function Calendar() {
           </div>
         </section>
 
+        {/* 리스트 */}
         <aside className="mt-10 lg:mt-0 lg:col-span-7">
-          {/* 리스트 헤더 + 검색 */}
           <div className="flex items-start justify-between gap-3 mb-4">
             <div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
@@ -435,7 +415,6 @@ export default function Calendar() {
             </div>
           </div>
 
-          {/* 스크롤 가능한 리스트 영역 */}
           <div className="rounded-2xl border border-gray-200 bg-white shadow-sm max-h-[70vh] overflow-y-auto p-2 sm:p-3">
             {listItems && listItems.length > 0 ? (
               <ul className="space-y-2">

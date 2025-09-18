@@ -75,7 +75,8 @@ export default function CreateTravelPlan() {
   const [submitting, setSubmitting] = useState(false);
 
   // 추천 결과
-  const [recommendation, setRecommendation] = useState<TravelRecommendation | null>(null);
+  const [recommendation, setRecommendation] =
+    useState<TravelRecommendation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -136,13 +137,18 @@ export default function CreateTravelPlan() {
         areaInfo.area,
         areaInfo.sigungu,
         categories,
-        days
+        days,
+        startDate,
+        endDate
       );
 
       setRecommendation(data as TravelRecommendation);
     } catch (err: unknown) {
       console.error("여행 계획 생성 오류:", err);
-      const errorMessage = err instanceof Error ? err.message : "여행 계획을 생성하는 중 오류가 발생했습니다.";
+      const errorMessage =
+        err instanceof Error
+          ? err.message
+          : "여행 계획을 생성하는 중 오류가 발생했습니다.";
       setError(errorMessage);
     } finally {
       setLoading(false);
@@ -159,7 +165,16 @@ export default function CreateTravelPlan() {
   ];
 
   // 국내 인기 여행지
-  const popularDestinations = ["제주도", "강릉", "부산", "여수", "경주", "전주", "속초", "울산"];
+  const popularDestinations = [
+    "제주도",
+    "강릉",
+    "부산",
+    "여수",
+    "경주",
+    "전주",
+    "속초",
+    "울산",
+  ];
 
   const canProgress = () => {
     switch (step) {
@@ -188,12 +203,22 @@ export default function CreateTravelPlan() {
       return 1;
     }
 
-    const daysDiff = Math.ceil((endTimestamp - startTimestamp) / (1000 * 60 * 60 * 24) + 1);
+    const daysDiff = Math.ceil(
+      (endTimestamp - startTimestamp) / (1000 * 60 * 60 * 24) + 1
+    );
     return Math.max(1, daysDiff); // 최소 1일로 보장
   };
 
   // 더미 광고 컴포넌트 - 실제 이미지 사용
-  const DummyAd = ({ width, height, type = "default" }: { width: string; height: string; type?: string }) => {
+  const DummyAd = ({
+    width,
+    height,
+    type = "default",
+  }: {
+    width: string;
+    height: string;
+    type?: string;
+  }) => {
     // 랜덤 색상을 미리 정의 (매번 바뀌지 않도록)
     const colors = ["#e9f5ff", "#fff2e8", "#f0f9e8", "#ffeaf5", "#f2f2ff"];
     const bgColor = colors[0]; // 항상 첫 번째 색상 사용
@@ -227,10 +252,16 @@ export default function CreateTravelPlan() {
                 padding: "10px",
               }}
             >
-              <div className="text-sm font-bold mb-2 text-gray-800">{adContent.title}</div>
+              <div className="text-sm font-bold mb-2 text-gray-800">
+                {adContent.title}
+              </div>
               <div className="text-xs text-gray-600">{adContent.desc}</div>
-              <div className="mt-3 px-3 py-1 bg-blue-500 text-white text-xs rounded-full">더 알아보기</div>
-              <div className="absolute bottom-1 right-1 text-[8px] text-gray-400">광고</div>
+              <div className="mt-3 px-3 py-1 bg-blue-500 text-white text-xs rounded-full">
+                더 알아보기
+              </div>
+              <div className="absolute bottom-1 right-1 text-[8px] text-gray-400">
+                광고
+              </div>
             </div>
           </div>
         ) : (
@@ -247,7 +278,9 @@ export default function CreateTravelPlan() {
               padding: "8px",
             }}
           >
-            <span className="text-xs text-center font-medium text-gray-700 mb-1">광고 영역</span>
+            <span className="text-xs text-center font-medium text-gray-700 mb-1">
+              광고 영역
+            </span>
             <span className="text-[9px] text-gray-500">
               {width}x{height}
             </span>
@@ -289,12 +322,16 @@ export default function CreateTravelPlan() {
 
     return (
       <div className="my-8">
-        <h3 className="text-xl font-bold text-gray-800 mb-4">여행 계획이 준비되었습니다!</h3>
+        <h3 className="text-xl font-bold text-gray-800 mb-4">
+          여행 계획이 준비되었습니다!
+        </h3>
 
         <div className="rounded-lg border border-gray-200 overflow-hidden">
           {Object.entries(recommendation.schedule).map(([day, data]) => (
             <div key={day} className="border-b border-gray-200 last:border-0">
-              <div className="bg-blue-50 px-4 py-2 font-medium">{day.replace("day_", "일차")}</div>
+              <div className="bg-blue-50 px-4 py-2 font-medium">
+                {day.replace("day_", "일차")}
+              </div>
               <div className="p-4">
                 <h4 className="font-medium mb-2">방문할 장소</h4>
                 <ul className="space-y-3">
@@ -308,7 +345,9 @@ export default function CreateTravelPlan() {
                         <p className="text-sm text-gray-600">
                           {spot.addr1} {spot.addr2}
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">{spot.category_name}</p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {spot.category_name}
+                        </p>
                       </div>
                     </li>
                   ))}
@@ -350,7 +389,13 @@ export default function CreateTravelPlan() {
 
   // 여행 계획 저장 함수
   const saveTravelPlan = async () => {
-    if (!recommendation || !destination || !startDate || !endDate || !travelStyle) {
+    if (
+      !recommendation ||
+      !destination ||
+      !startDate ||
+      !endDate ||
+      !travelStyle
+    ) {
       alert("여행 계획 정보가 완성되지 않았습니다.");
       return;
     }
@@ -371,11 +416,15 @@ export default function CreateTravelPlan() {
       };
 
       // API 호출하여 서버에 저장
-      const response = await recommendationApi.saveTravelRecommendation(planData);
+      const response = await recommendationApi.saveTravelRecommendation(
+        planData
+      );
 
       // localStorage에서 기존 계획 가져오기
       const existingPlansJSON = localStorage.getItem("travelPlans");
-      const existingPlans = existingPlansJSON ? JSON.parse(existingPlansJSON) : [];
+      const existingPlans = existingPlansJSON
+        ? JSON.parse(existingPlansJSON)
+        : [];
 
       // 새 여행 계획 객체 생성
       const newPlan = {
@@ -422,7 +471,10 @@ export default function CreateTravelPlan() {
       울산: "https://images.unsplash.com/photo-1591604129954-6c77099226ad",
     };
 
-    return imageMap[dest] || "https://images.unsplash.com/photo-1503899036084-c55cdd92da26";
+    return (
+      imageMap[dest] ||
+      "https://images.unsplash.com/photo-1503899036084-c55cdd92da26"
+    );
   };
 
   usePerformance("CreateTravelPlan");
@@ -436,21 +488,31 @@ export default function CreateTravelPlan() {
           {/* 왼쪽 광고 영역 */}
           <div className="hidden lg:block mr-8 sticky top-24 space-y-4">
             <DummyAd width="160px" height="600px" type="image" />
-            <p className="text-xs text-center text-gray-500 mt-1">향후 실제 광고로 대체됩니다</p>
+            <p className="text-xs text-center text-gray-500 mt-1">
+              향후 실제 광고로 대체됩니다
+            </p>
           </div>
 
           {/* 중앙 콘텐츠 */}
           <div className="w-full max-w-2xl">
             <div className="bg-white rounded-lg shadow-md overflow-hidden">
               <div className="p-6">
-                <h1 className="text-2xl font-bold text-gray-800 mb-4">국내 여행 계획 만들기</h1>
+                <h1 className="text-2xl font-bold text-gray-800 mb-4">
+                  국내 여행 계획 만들기
+                </h1>
 
                 {/* 단계 표시 */}
                 <div className="flex mb-6">
                   {[0, 1, 2].map((i) => (
                     <div key={i} className="flex-1">
-                      <div className={`h-2 ${i <= step ? "bg-blue-500" : "bg-gray-200"}`}></div>
-                      <p className="text-xs mt-1 text-center">{i === 0 ? "여행지" : i === 1 ? "일정" : "스타일"}</p>
+                      <div
+                        className={`h-2 ${
+                          i <= step ? "bg-blue-500" : "bg-gray-200"
+                        }`}
+                      ></div>
+                      <p className="text-xs mt-1 text-center">
+                        {i === 0 ? "여행지" : i === 1 ? "일정" : "스타일"}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -463,7 +525,9 @@ export default function CreateTravelPlan() {
                     {/* 스텝 1: 여행지 */}
                     {step === 0 && (
                       <div>
-                        <h2 className="text-lg font-medium text-gray-700 mb-4">어디로 떠나시나요?</h2>
+                        <h2 className="text-lg font-medium text-gray-700 mb-4">
+                          어디로 떠나시나요?
+                        </h2>
                         <input
                           type="text"
                           value={destination}
@@ -473,7 +537,9 @@ export default function CreateTravelPlan() {
                         />
 
                         <div className="mt-4">
-                          <p className="text-sm text-gray-600 mb-2">인기 국내 여행지:</p>
+                          <p className="text-sm text-gray-600 mb-2">
+                            인기 국내 여행지:
+                          </p>
                           <div className="flex flex-wrap gap-2">
                             {popularDestinations.map((place) => (
                               <button
@@ -497,10 +563,14 @@ export default function CreateTravelPlan() {
                     {/* 스텝 2: 여행 기간 */}
                     {step === 1 && (
                       <div>
-                        <h2 className="text-lg font-medium text-gray-700 mb-4">언제 여행하시나요?</h2>
+                        <h2 className="text-lg font-medium text-gray-700 mb-4">
+                          언제 여행하시나요?
+                        </h2>
                         <div className="grid grid-cols-2 gap-4">
                           <div>
-                            <label className="block text-sm text-gray-600 mb-1">출발일</label>
+                            <label className="block text-sm text-gray-600 mb-1">
+                              출발일
+                            </label>
                             <input
                               type="date"
                               value={startDate}
@@ -509,7 +579,9 @@ export default function CreateTravelPlan() {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm text-gray-600 mb-1">도착일</label>
+                            <label className="block text-sm text-gray-600 mb-1">
+                              도착일
+                            </label>
                             <input
                               type="date"
                               value={endDate}
@@ -519,18 +591,22 @@ export default function CreateTravelPlan() {
                           </div>
                         </div>
 
-                        {startDate && endDate && new Date(startDate) <= new Date(endDate) && (
-                          <div className="mt-4 p-3 bg-blue-50 rounded-md text-blue-700 text-sm">
-                            {calculateDays()}일 여행을 계획 중이시네요!
-                          </div>
-                        )}
+                        {startDate &&
+                          endDate &&
+                          new Date(startDate) <= new Date(endDate) && (
+                            <div className="mt-4 p-3 bg-blue-50 rounded-md text-blue-700 text-sm">
+                              {calculateDays()}일 여행을 계획 중이시네요!
+                            </div>
+                          )}
                       </div>
                     )}
 
                     {/* 스텝 3: 여행 스타일 */}
                     {step === 2 && (
                       <div>
-                        <h2 className="text-lg font-medium text-gray-700 mb-4">어떤 여행을 원하시나요?</h2>
+                        <h2 className="text-lg font-medium text-gray-700 mb-4">
+                          어떤 여행을 원하시나요?
+                        </h2>
                         <div className="grid grid-cols-1 gap-3">
                           {travelStyles.map((style) => (
                             <div
@@ -543,7 +619,9 @@ export default function CreateTravelPlan() {
                               }`}
                             >
                               <div className="font-medium">{style.label}</div>
-                              <div className="text-sm text-gray-600 mt-1">{style.desc}</div>
+                              <div className="text-sm text-gray-600 mt-1">
+                                {style.desc}
+                              </div>
                             </div>
                           ))}
                         </div>
@@ -601,7 +679,9 @@ export default function CreateTravelPlan() {
           <div className="hidden lg:flex flex-col ml-8 sticky top-24 space-y-4">
             <DummyAd width="300px" height="250px" type="image" />
             <DummyAd width="300px" height="250px" type="image" />
-            <p className="text-xs text-center text-gray-500 mt-1">향후 실제 광고로 대체됩니다</p>
+            <p className="text-xs text-center text-gray-500 mt-1">
+              향후 실제 광고로 대체됩니다
+            </p>
           </div>
         </div>
       </div>

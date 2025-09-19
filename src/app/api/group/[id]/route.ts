@@ -13,6 +13,10 @@ export async function GET(
     const accessToken = request.headers.get("authorization");
     const cookies = request.headers.get("cookie");
 
+    console.log(`[Proxy GET] /api/group/${id} 요청`);
+    console.log("[Proxy GET] accessToken:", accessToken ? "있음" : "없음");
+    console.log("[Proxy GET] cookies:", cookies ? "있음" : "없음");
+
     const response = await fetch(`${API_URL}/api/group/${id}`, {
       method: "GET",
       headers: {
@@ -21,7 +25,20 @@ export async function GET(
         ...(cookies && { Cookie: cookies }),
       },
       credentials: "include",
+      redirect: "manual",
     });
+
+    console.log("[Proxy GET] Response status:", response.status);
+
+    if (response.status === 302 || response.status === 301) {
+      console.error("[Proxy GET] 인증 실패 - 302 리다이렉트");
+      const location = response.headers.get("location");
+      console.error("[Proxy GET] Redirect to:", location);
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -63,7 +80,16 @@ export async function PUT(
       },
       body: JSON.stringify(body),
       credentials: "include",
+      redirect: "manual",
     });
+
+    if (response.status === 302 || response.status === 301) {
+      console.error("[Proxy PUT] 인증 실패 - 302 리다이렉트");
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -103,7 +129,16 @@ export async function DELETE(
         ...(cookies && { Cookie: cookies }),
       },
       credentials: "include",
+      redirect: "manual",
     });
+
+    if (response.status === 302 || response.status === 301) {
+      console.error("[Proxy DELETE] 인증 실패 - 302 리다이렉트");
+      return NextResponse.json(
+        { error: "로그인이 필요합니다." },
+        { status: 401 }
+      );
+    }
 
     if (!response.ok) {
       const errorText = await response.text();

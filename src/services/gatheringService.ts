@@ -1,7 +1,7 @@
 import { api } from "./api";
 import axios from "axios";
 
-// 직접 서버 API 호출 (api.ts의 응답 인터셉터에서 302 처리)
+// 아까 성공했던 방식: 직접 서버 API 호출
 const gatheringApi = api;
 export interface GatheringPost {
   id: number;

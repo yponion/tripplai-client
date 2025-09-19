@@ -143,10 +143,28 @@ export default function GatheringCreatePage() {
         // images: uploadedImageUrls
       };
 
+      console.log("전송할 데이터:", gatheringData);
       const post = await gatheringService.create(gatheringData);
-      if (post?.id) router.push(`/gathering/${post.id}`);
-    } catch (error) {
+      console.log("서버 응답:", post);
+
+      alert("모집글 작성이 완료되었습니다!");
+
+      if (post?.id) {
+        router.push(`/gathering/${post.id}`);
+      } else {
+        // id가 없으면 목록 페이지로
+        router.push("/gathering");
+      }
+    } catch (error: any) {
       console.error("Error creating gathering:", error);
+
+      // 401이나 302 에러는 인증 문제
+      if (error.response?.status === 401 || error.response?.status === 302) {
+        alert("로그인이 만료되었습니다. 다시 로그인해주세요.");
+        router.push("/login");
+      } else {
+        alert("모집글 작성에 실패했습니다. 다시 시도해주세요.");
+      }
     } finally {
       setSubmitting(false);
     }

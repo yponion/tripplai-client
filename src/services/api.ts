@@ -38,10 +38,48 @@ const fastapiClient = axios.create({
 
 // Request interceptor for adding auth token
 api.interceptors.request.use(async (config) => {
-  const accessToken = sessionStorage.getItem("accessToken");
-  if (accessToken) config.headers.Authorization = `Bearer ${accessToken}`;
+  console.log("[API] 인터셉터 실행됨");
+
+  // 여러 방법으로 토큰 가져오기 시도
+  const accessToken1 = sessionStorage.getItem("accessToken");
+  const accessToken2 = window.sessionStorage.getItem("accessToken");
+
+  console.log("[API] sessionStorage.getItem:", accessToken1);
+  console.log("[API] window.sessionStorage.getItem:", accessToken2);
+  console.log("[API] sessionStorage 직접 접근:", sessionStorage.accessToken);
+
+  const finalToken = accessToken1 || accessToken2 || sessionStorage.accessToken;
+
+  if (finalToken) {
+    config.headers.Authorization = `Bearer ${finalToken}`;
+    console.log(
+      "[API] ✅ 토큰 설정됨:",
+      `Bearer ${finalToken.substring(0, 20)}...`
+    );
+  } else {
+    console.log("[API] ❌ 모든 방법으로 토큰을 찾을 수 없음!");
+    console.log("[API] sessionStorage 키들:", Object.keys(sessionStorage));
+  }
   return config;
 });
+
+// Response interceptor for handling 302 redirects
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    // 302 리다이렉트는 인증 실패로 처리
+    if (error.response?.status === 302) {
+      console.log("302 리다이렉트 감지 - 인증 만료");
+      // 토큰 제거
+      sessionStorage.removeItem("accessToken");
+      // 로그인 페이지로 리다이렉트
+      if (typeof window !== "undefined") {
+        window.location.href = "/login";
+      }
+    }
+    return Promise.reject(error);
+  }
+);
 
 // TravelRecommendation 타입 정의
 interface TravelPlanData {

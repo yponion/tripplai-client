@@ -1,39 +1,8 @@
 import { api } from "./api";
 import axios from "axios";
 
-// HTTPS 환경에서는 프록시 사용
-const isHttps =
-  typeof window !== "undefined" && window.location.protocol === "https:";
-const gatheringApi = isHttps
-  ? axios.create({
-      baseURL: "", // 현재 도메인 사용 (프록시는 같은 도메인)
-      headers: {
-        "Content-Type": "application/json",
-      },
-    })
-  : api;
-
-// Request interceptor for adding auth token (모든 환경에서 동작)
-gatheringApi.interceptors.request.use(async (config) => {
-  const accessToken = sessionStorage.getItem("accessToken");
-  if (accessToken) {
-    config.headers.Authorization = `Bearer ${accessToken}`;
-    console.log(
-      "[GatheringService] Token 추가됨:",
-      accessToken.substring(0, 20) + "..."
-    );
-  } else {
-    console.log("[GatheringService] Token 없음!");
-    // HTTPS 환경에서만 로그인 페이지로 리다이렉트 (프록시 사용 시)
-    if (isHttps && typeof window !== "undefined") {
-      alert("로그인이 필요합니다.");
-      window.location.href = "/login";
-      return Promise.reject(new Error("로그인이 필요합니다."));
-    }
-  }
-  return config;
-});
-
+// 항상 직접 서버 API 호출
+const gatheringApi = api;
 export interface GatheringPost {
   id: number;
   title: string;

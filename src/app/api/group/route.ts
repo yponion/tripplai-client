@@ -61,6 +61,8 @@ export async function POST(request: NextRequest) {
     console.log("[Proxy] accessToken:", accessToken ? "있음" : "없음");
     console.log("[Proxy] cookies:", cookies ? "있음" : "없음");
     console.log("[Proxy] Full token:", accessToken); // 토큰 전체 확인
+    console.log("[Proxy] Request headers:", Object.keys(headers));
+    console.log("[Proxy] Request body:", body);
 
     // 요청 헤더 설정
     const headers: HeadersInit = {

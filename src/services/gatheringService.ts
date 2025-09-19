@@ -13,22 +13,26 @@ const gatheringApi = isHttps
     })
   : api;
 
-// Request interceptor for adding auth token (프록시 사용 시)
-if (isHttps) {
-  gatheringApi.interceptors.request.use(async (config) => {
-    const accessToken = sessionStorage.getItem("accessToken");
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
-      console.log(
-        "[GatheringService] Token 추가됨:",
-        accessToken.substring(0, 20) + "..."
-      );
-    } else {
-      console.log("[GatheringService] Token 없음!");
+// Request interceptor for adding auth token (모든 환경에서 동작)
+gatheringApi.interceptors.request.use(async (config) => {
+  const accessToken = sessionStorage.getItem("accessToken");
+  if (accessToken) {
+    config.headers.Authorization = `Bearer ${accessToken}`;
+    console.log(
+      "[GatheringService] Token 추가됨:",
+      accessToken.substring(0, 20) + "..."
+    );
+  } else {
+    console.log("[GatheringService] Token 없음!");
+    // HTTPS 환경에서만 로그인 페이지로 리다이렉트 (프록시 사용 시)
+    if (isHttps && typeof window !== "undefined") {
+      alert("로그인이 필요합니다.");
+      window.location.href = "/login";
+      return Promise.reject(new Error("로그인이 필요합니다."));
     }
-    return config;
-  });
-}
+  }
+  return config;
+});
 
 export interface GatheringPost {
   id: number;

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://3.34.52.239:8080";
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tripplanner.p-e.kr";
 
 const FASTAPI_URL =
   process.env.NEXT_PUBLIC_FASTAPI_URL || "http://localhost:8000";
@@ -11,6 +11,20 @@ export const api = axios.create({
   withCredentials: true,
   headers: {
     "Content-Type": "application/json",
+  },
+  paramsSerializer: (params) => {
+    // 배열 파라미터를 Spring Boot가 인식할 수 있는 형식으로 변환
+    const searchParams = new URLSearchParams();
+    Object.keys(params).forEach((key) => {
+      const value = params[key];
+      if (Array.isArray(value)) {
+        // 배열의 경우 key=value1&key=value2 형식으로 변환
+        value.forEach((v) => searchParams.append(key, v));
+      } else {
+        searchParams.append(key, value);
+      }
+    });
+    return searchParams.toString();
   },
 });
 
@@ -89,7 +103,7 @@ export const recommendationApi = {
       params.endDate = end.toISOString().split("T")[0];
     }
 
-    return api.get("/api/recommend", { params });
+    return api.post("/api/recommend", params);
   },
 
   // 추천 결과 저장 API

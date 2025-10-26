@@ -40,6 +40,7 @@ interface TravelRecommendation {
     [key: string]: DaySchedule;
   };
   message: string;
+  area_code?: string;
 }
 
 // 지역 코드 매핑 (간단한 예시)
@@ -79,6 +80,7 @@ export default function CreateTravelPlan() {
     useState<TravelRecommendation | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [currentAreaCode, setCurrentAreaCode] = useState<string>("");
 
   // URL 파라미터에서 초기값 설정
   useEffect(() => {
@@ -131,6 +133,9 @@ export default function CreateTravelPlan() {
 
       // 카테고리 코드 가져오기
       const categories = TRAVEL_STYLE_CATEGORIES[travelStyle];
+
+      // areaCode 저장 (저장 시 사용)
+      setCurrentAreaCode(areaInfo.area);
 
       // API 호출
       const { data } = await recommendationApi.getTravelRecommendations(
@@ -403,17 +408,18 @@ export default function CreateTravelPlan() {
     try {
       setLoading(true);
 
-      // 서버에 저장할 데이터 구성
+      // 백엔드 명세에 맞게 데이터 구조 변환
       const planData = {
-        destination,
         startDate,
         endDate,
-        travelStyle,
-        duration: calculateDays(),
-        schedule: recommendation.schedule,
-        // 기타 필요한 정보
-        message: recommendation.message,
+        response: {
+          schedule: recommendation.schedule,
+          message: recommendation.message,
+          area_code: recommendation.area_code || currentAreaCode, // API 응답 또는 저장된 areaCode 사용
+        },
       };
+
+      console.log("📤 [CREATE] 저장 요청 데이터:", planData);
 
       // API 호출하여 서버에 저장
       const response = await recommendationApi.saveTravelRecommendation(

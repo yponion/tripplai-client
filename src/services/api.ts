@@ -137,32 +137,33 @@ api.interceptors.response.use(
 
 // TravelRecommendation 타입 정의
 interface TravelPlanData {
-  destination: string;
   startDate: string;
   endDate: string;
-  travelStyle: string;
-  duration: number;
-  schedule: Record<
-    string,
-    {
-      spots: Array<{
-        name: string;
-        addr1: string;
-        addr2?: string;
-        category_name?: string;
-        category_code?: string;
-        type?: string;
-        latitude?: number;
-        longitude?: number;
-      }>;
-      accommodation?: {
-        name: string;
-        addr1: string;
-        addr2?: string;
-      };
-    }
-  >;
-  message?: string;
+  response: {
+    schedule: Record<
+      string,
+      {
+        spots: Array<{
+          destination_id?: string;
+          name: string;
+          addr1: string;
+          addr2?: string;
+          category_name?: string;
+          category_code?: string;
+          content_id?: string;
+          latitude?: number;
+          longitude?: number;
+        }>;
+        accommodation?: {
+          name: string;
+          addr1: string;
+          addr2?: string;
+        };
+      }
+    >;
+    message?: string;
+    area_code?: string;
+  };
 }
 
 // 여행 추천 API
@@ -200,41 +201,21 @@ export const recommendationApi = {
 
   // 추천 결과 저장 API
   saveTravelRecommendation: (data: TravelPlanData, proofImage?: File) => {
-    // JSON 데이터를 문자열로 변환
-    const jsonString = JSON.stringify(data);
-    console.log("📤 [SAVE] 저장할 데이터 (JSON string):");
-    console.log(jsonString);
-    console.log("📤 [SAVE] 저장할 데이터 (객체):");
-    console.log(data);
-    
-    // FormData 생성 함수 (retry 시 재생성을 위해)
-    const createFormData = () => {
-      const formData = new FormData();
-      formData.append("data", jsonString);
-      if (proofImage) {
-        formData.append("proofImage", proofImage);
-      }
-      return formData;
+    // 백엔드 명세에 맞게 데이터 구조 변환
+    const requestBody = {
+      startDate: data.startDate,
+      endDate: data.endDate,
+      response: data.response  // 조회 시 받은 정보 그대로
     };
 
-    const formData = createFormData();
-
-    console.log("📤 [SAVE] FormData 내용:");
-    for (const [key, value] of formData.entries()) {
-      console.log(`  ${key}:`, typeof value === 'string' ? value : value);
-    }
-
-    if (proofImage) {
-      console.log("📤 [SAVE] 이미지 포함:", proofImage.name);
-    }
-
-    // config에 FormData 생성자 저장 (retry를 위해)
-    return api.post("/api/recommend/save", formData, {
+    console.log("📤 [SAVE] 저장할 데이터 (JSON):");
+    console.log(JSON.stringify(requestBody, null, 2));
+    
+    // JSON으로 전송 (FormData 아님!)
+    return api.post("/api/recommend/save", requestBody, {
       headers: {
-        "Content-Type": "multipart/form-data",
+        "Content-Type": "application/json",
       },
-      // @ts-ignore - 커스텀 필드
-      _formDataCreator: createFormData,
     });
   },
 };

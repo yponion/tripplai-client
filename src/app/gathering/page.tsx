@@ -5,6 +5,7 @@ import Layout from '@/components/Layout'
 import Button from '@/components/common/Button'
 import Link from 'next/link'
 import { FaSearch } from 'react-icons/fa'
+import { Heart, Users } from 'lucide-react'
 import { gatheringService, GatheringPost } from '@/services/gatheringService'
 import { formatDate } from '@/utils/dateUtils'
 
@@ -16,6 +17,7 @@ export default function GatheringPage() {
   const [totalPages, setTotalPages] = useState<number | undefined>(undefined)
   const [keyword, setKeyword] = useState('')
   const [query, setQuery] = useState('')
+  const [statusFilter, setStatusFilter] = useState<'all' | 'open' | 'closed'>('all')
 
   const load = async () => {
     setLoading(true)
@@ -32,14 +34,27 @@ export default function GatheringPage() {
   }, [page])
 
   const filtered = useMemo(() => {
+    let result = items
+    
+    // Apply status filter
+    if (statusFilter === 'open') {
+      result = result.filter((p) => (p.participateCount || 0) < (p.maxCount || 10))
+    } else if (statusFilter === 'closed') {
+      result = result.filter((p) => (p.participateCount || 0) >= (p.maxCount || 10))
+    }
+    
+    // Apply search query
     const q = query.trim().toLowerCase()
-    if (!q) return items
-    return items.filter((p) =>
-      [p.title, p.content, p.author]
-        .filter(Boolean)
-        .some((v) => (v || '').toLowerCase().includes(q))
-    )
-  }, [items, query])
+    if (q) {
+      result = result.filter((p) =>
+        [p.title, p.content, p.author]
+          .filter(Boolean)
+          .some((v) => (v || '').toLowerCase().includes(q))
+      )
+    }
+    
+    return result
+  }, [items, query, statusFilter])
 
   const SkeletonCard = () => (
     <div className="airbnb-card p-4 animate-pulse">
@@ -64,9 +79,10 @@ export default function GatheringPage() {
   return (
     <Layout>
       <div className="pt-24 pb-16 container mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
-          <h1 className="text-2xl font-semibold">여행멤버 구하기</h1>
-          <div className="flex-1 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
+        <div className="flex flex-col gap-4 mb-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="text-2xl font-semibold">여행멤버 구하기</h1>
+            <div className="flex-1 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-end">
             <div className="w-full sm:w-auto sm:min-w-[420px]">
               <div className="flex items-center rounded-full bg-white shadow-sm hover:shadow-md transition-shadow duration-300 overflow-hidden pl-5 pr-2 py-2 border border-gray-200 dark:bg-gray-900">
                 <input
@@ -87,6 +103,32 @@ export default function GatheringPage() {
             <Link href="/gathering/create">
               <Button variant="primary">모집글 작성</Button>
             </Link>
+            </div>
+          </div>
+          
+          {/* Status Filter Buttons */}
+          <div className="flex gap-2">
+            <Button
+              variant={statusFilter === 'all' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFilter('all')}
+            >
+              전체
+            </Button>
+            <Button
+              variant={statusFilter === 'open' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFilter('open')}
+            >
+              모집중
+            </Button>
+            <Button
+              variant={statusFilter === 'closed' ? 'primary' : 'outline'}
+              size="sm"
+              onClick={() => setStatusFilter('closed')}
+            >
+              마감
+            </Button>
           </div>
         </div>
 
@@ -116,7 +158,13 @@ export default function GatheringPage() {
                     // 로컬 대표 썸네일 매핑
                     <img src={getLocalThumbnail(p.title)} alt={p.title} className="w-full h-full object-cover transition-transform duration-700 ease-out group-hover:scale-110 group-hover:brightness-105" />
                   )}
-                  <div className="absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold bg-white/80 text-rose-500 shadow-sm">모집중</div>
+                  <div className={`absolute top-3 left-3 px-2.5 py-1 rounded-full text-xs font-semibold shadow-sm ${
+                    (p.participateCount || 0) >= (p.maxCount || 10)
+                      ? 'bg-gray-100 text-gray-600'
+                      : 'bg-white/80 text-rose-500'
+                  }`}>
+                    {(p.participateCount || 0) >= (p.maxCount || 10) ? '마감' : '모집중'}
+                  </div>
                 </div>
                 <div className="p-4">
                   <div className="text-base font-bold text-gray-800 mb-1 line-clamp-1">{p.title}</div>
@@ -131,9 +179,15 @@ export default function GatheringPage() {
                   </div>
                   <div className="text-sm text-gray-700 line-clamp-2 min-h-[2.5rem]">{p.content}</div>
                   <div className="mt-3 flex items-center justify-between">
-                    <div className="flex gap-1">
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-gray-100 text-gray-600">여행</span>
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[11px] bg-gray-100 text-gray-600">모집</span>
+                    <div className="flex gap-3 items-center text-xs text-gray-600">
+                      <span className="flex items-center gap-1">
+                        <Users className="w-3.5 h-3.5" />
+                        <span className="font-medium">{p.participateCount || 0}/{p.maxCount || 10}</span>
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Heart className="w-3.5 h-3.5 text-rose-500" />
+                        <span className="font-medium">{p.groupLikeCount || 0}</span>
+                      </span>
                     </div>
                     <span className="text-xs text-rose-500 font-semibold group-hover:translate-x-0.5 transition-transform">자세히 보기 →</span>
                   </div>

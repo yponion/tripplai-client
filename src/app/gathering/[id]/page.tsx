@@ -117,8 +117,10 @@ export default function GatheringDetailPage() {
     try {
       await gatheringService.participate(post.id);
       alert("참가 신청이 완료되었습니다!");
-      // 페이지 새로고침
-      window.location.reload();
+      // 데이터 새로고침
+      const updated = await gatheringService.get(post.id);
+      setPost(updated);
+      setIsParticipating(true);
     } catch (error) {
       console.error("참가 신청 실패:", error);
       alert("참가 신청에 실패했습니다.");
@@ -135,7 +137,10 @@ export default function GatheringDetailPage() {
     try {
       await gatheringService.leave(post.id);
       alert("탈퇴가 완료되었습니다.");
-      window.location.reload();
+      // 데이터 새로고침
+      const updated = await gatheringService.get(post.id);
+      setPost(updated);
+      setIsParticipating(false);
     } catch (error) {
       console.error("탈퇴 실패:", error);
       alert("탈퇴에 실패했습니다.");
@@ -150,8 +155,10 @@ export default function GatheringDetailPage() {
     try {
       await gatheringService.permit(post.id, enrollId);
       alert("신청을 수락했습니다.");
-      loadApplicants();
-      window.location.reload();
+      // 데이터 새로고침
+      await loadApplicants();
+      const updated = await gatheringService.get(post.id);
+      setPost(updated);
     } catch (error) {
       console.error("허가 실패:", error);
       alert("신청 수락에 실패했습니다.");
@@ -166,8 +173,10 @@ export default function GatheringDetailPage() {
     try {
       if (isLiked) {
         await gatheringService.unlike(post.id);
+        setPost({ ...post, groupLikeCount: (post.groupLikeCount || 0) - 1 });
       } else {
         await gatheringService.like(post.id);
+        setPost({ ...post, groupLikeCount: (post.groupLikeCount || 0) + 1 });
       }
       setIsLiked(!isLiked);
     } catch (error) {
@@ -250,6 +259,7 @@ export default function GatheringDetailPage() {
                         </span>
                       </div>
                     </div>
+                    
                     <div className="flex items-center gap-2">
                       {/* 좋아요 버튼 - 로그인한 사용자만 */}
                       {currentMemberId && (
@@ -345,6 +355,32 @@ export default function GatheringDetailPage() {
                             )}
                           </>
                         )}
+                    </div>
+                  </div>
+                  
+                  {/* Info Section with Counters */}
+                  <div className="mt-4 flex flex-wrap gap-4 p-4 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-5 h-5 text-gray-600" />
+                      <span className="text-sm">
+                        <strong className="text-gray-900">{post.participateCount || 0}</strong>
+                        <span className="text-gray-600"> / {post.maxCount || 10}명</span>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Heart className="w-5 h-5 text-rose-500" />
+                      <span className="text-sm">
+                        <strong className="text-gray-900">{post.groupLikeCount || 0}</strong>
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                        (post.participateCount || 0) >= (post.maxCount || 10)
+                          ? 'bg-gray-200 text-gray-600'
+                          : 'bg-rose-100 text-rose-600'
+                      }`}>
+                        {(post.participateCount || 0) >= (post.maxCount || 10) ? '모집 마감' : '모집 중'}
+                      </span>
                     </div>
                   </div>
 

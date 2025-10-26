@@ -13,6 +13,10 @@ export interface GatheringPost {
   createdAt?: string;
   updatedAt?: string;
   thumbnailUrl?: string;
+  participateCount?: number;
+  maxCount?: number;
+  groupLikeCount?: number;
+  count?: number;
 }
 
 export interface PageResponse<T> {
@@ -203,13 +207,13 @@ export const gatheringService = {
   // 그룹 참여인원 조회
   async getParticipants(id: number): Promise<any[]> {
     const res = await gatheringApi.get(`/api/group/${id}/participate`);
-    return res.data;
+    return res.data.content || [];
   },
 
   // 그룹 신청인원 조회
   async getApplicants(id: number): Promise<any[]> {
     const res = await gatheringApi.get(`/api/group/${id}/apply`);
-    return res.data;
+    return res.data.content || [];
   },
 
   // 그룹 좋아요

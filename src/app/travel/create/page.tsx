@@ -410,8 +410,8 @@ export default function CreateTravelPlan() {
 
       // 백엔드 명세에 맞게 데이터 구조 변환
       const planData = {
-        startDate,
-        endDate,
+        startDate: new Date(startDate).toISOString(), // ISO 8601 형식
+        endDate: new Date(endDate).toISOString(),     // ISO 8601 형식
         response: {
           schedule: recommendation.schedule,
           message: recommendation.message,
@@ -456,9 +456,18 @@ export default function CreateTravelPlan() {
 
       // 대시보드로 이동
       router.push("/dashboard");
-    } catch (error) {
+    } catch (error: any) {
       console.error("여행 계획 저장 오류:", error);
-      alert("여행 계획 저장 중 오류가 발생했습니다.");
+      
+      // 상세 에러 메시지
+      let errorMessage = "여행 계획 저장 중 오류가 발생했습니다.";
+      if (error.response?.data?.message) {
+        errorMessage += `\n원인: ${error.response.data.message}`;
+      } else if (error.message) {
+        errorMessage += `\n원인: ${error.message}`;
+      }
+      
+      alert(errorMessage + "\n\n다시 시도해주세요.");
     } finally {
       setLoading(false);
     }

@@ -2,12 +2,13 @@ import getDetailCommon from "@/app/festival/_services/getDetailCommon";
 import NavSection from "@/components/common/NavSection";
 import Image from "next/image";
 import Link from "next/link";
-import { FaMapMarkerAlt, FaPhone, FaRegHeart, FaExternalLinkAlt } from "react-icons/fa";
+import { FaMapMarkerAlt, FaPhone, FaExternalLinkAlt } from "react-icons/fa";
 import { FaSun, FaCloud, FaCloudSun, FaCloudShowersHeavy, FaCloudRain, FaSnowflake, FaUmbrella } from "react-icons/fa";
 import KakaoMapEmbed from "@/components/common/KakaoMapEmbed";
 import { tour } from "@/services/tour";
 import type { AreaBasedList, AreaBasedListResponse, AreaCodeResponse } from "@/types/tourInfo";
 import { getShortTermForecast, getBestTravelSeason } from "@/services/weatherService";
+import KeepButton from "./components/KeepButton";
 
 type Params = Promise<{ id: string }>;
 
@@ -117,14 +118,9 @@ export default async function DetailPage({ params }: { params: Params }) {
                   <Image src="/icons/kakao-talk.png" alt="kakao map" width={18} height={18} />
                   <span className="text-sm font-medium hidden md:inline">지도</span>
                 </a>
-                <button
-                  type="button"
-                  aria-label="찜하기"
-                  className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/90 text-rose-600 hover:bg-white"
-                >
-                  <FaRegHeart />
+                <KeepButton contentId={id}>
                   <span className="text-sm font-medium hidden md:inline">찜하기</span>
-                </button>
+                </KeepButton>
               </div>
             </div>
           </section>

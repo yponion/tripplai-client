@@ -399,6 +399,12 @@ const NavSection = () => {
                 >
                   내가 찜한 인기여행코스
                 </Link>
+                <Link
+                  href="/keeps"
+                  className="block px-4 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-white"
+                >
+                  내가 찜한 여행지
+                </Link>
               </div>
             )}
           </div>

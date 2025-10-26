@@ -25,7 +25,7 @@ export interface PageResponse<T> {
 export const gatheringService = {
   async list(page = 0, size = 10): Promise<PageResponse<GatheringPost>> {
     const res = await gatheringApi.get("/api/group", {
-      params: { page, size },
+      params: { pageNum: page + 1, pageSize: size }, // 백엔드는 1부터 시작
     });
     const data = res.data;
     return {

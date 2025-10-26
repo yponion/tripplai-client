@@ -52,17 +52,22 @@ export const gatheringService = {
 
   async get(id: number): Promise<GatheringPost> {
     const res = await gatheringApi.get(`/api/group/${id}`);
-    const g = res.data;
+    const g = res.data;  // GroupResponse 구조
     return {
-      id: g.id,
+      id: g.groupId,                       // groupId → id
       title: g.title,
-      content: g.content || g.description, // content 우선, description 폴백
-      author: g.authorNickname || g.authorEmail,
-      authorId: g.authorId,
-      authorEmail: g.authorEmail,
-      createdAt: g.createdAt,
-      updatedAt: g.updatedAt,
-      thumbnailUrl: g.thumbnailUrl,
+      content: g.description || '',        // description → content
+      author: `회원 ${g.memberId}`,        // memberId로 표시
+      authorId: g.memberId,                // memberId → authorId
+      authorEmail: '',                     // 백엔드에서 제공 안함
+      createdAt: g.startDate || new Date().toISOString(),
+      updatedAt: g.endDate || new Date().toISOString(),
+      thumbnailUrl: '',                    // 백엔드에서 제공 안함
+      // 추가 필드
+      participateCount: g.participateCount,
+      maxCount: g.maxCount,
+      groupLikeCount: g.groupLikeCount,
+      count: g.count,
     };
   },
 

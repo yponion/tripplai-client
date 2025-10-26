@@ -46,11 +46,12 @@ export default function GatheringPage() {
     // Apply search query
     const q = query.trim().toLowerCase()
     if (q) {
-      result = result.filter((p) =>
-        [p.title, p.content, p.author]
+      result = result.filter((p) => {
+        const plainContent = stripHtml(p.content || '')
+        return [p.title, plainContent, p.author]
           .filter(Boolean)
           .some((v) => (v || '').toLowerCase().includes(q))
-      )
+      })
     }
     
     return result
@@ -74,6 +75,13 @@ export default function GatheringPage() {
     if (/(서울|seoul)/.test(t)) return '/images/thumbnails/seoul.png'
     if (/(전주|jeonju)/.test(t)) return '/images/thumbnails/jeonju.png'
     return '/images/thumbnails/busan.png'
+  }
+
+  // HTML 태그 제거 함수
+  const stripHtml = (html: string) => {
+    const tmp = document.createElement('div')
+    tmp.innerHTML = html
+    return tmp.textContent || tmp.innerText || ''
   }
 
   return (
@@ -177,7 +185,7 @@ export default function GatheringPage() {
                     </div>
                     <div className="text-xs text-gray-400">{p.createdAt ? formatDate(p.createdAt) : ''}</div>
                   </div>
-                  <div className="text-sm text-gray-700 line-clamp-2 min-h-[2.5rem]">{p.content}</div>
+                  <div className="text-sm text-gray-700 line-clamp-2 min-h-[2.5rem]">{stripHtml(p.content || '')}</div>
                   <div className="mt-3 flex items-center justify-between">
                     <div className="flex gap-3 items-center text-xs text-gray-600">
                       <span className="flex items-center gap-1">

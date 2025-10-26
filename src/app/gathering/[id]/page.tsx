@@ -405,9 +405,10 @@ export default function GatheringDetailPage() {
 
                   <hr className="my-5 border-gray-100" />
 
-                  <div className="whitespace-pre-line text-gray-800 leading-relaxed text-base">
-                    {post.content}
-                  </div>
+                  <div 
+                    className="prose max-w-none text-gray-800 leading-relaxed text-base"
+                    dangerouslySetInnerHTML={{ __html: post.content }}
+                  />
 
                   {/* 신청자 목록 - 작성자만 볼 수 있음 */}
                   {showApplicants &&

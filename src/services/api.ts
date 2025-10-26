@@ -63,20 +63,53 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
-// Response interceptor for handling 302 redirects
+// Response interceptor for handling 302 redirects and 401 errors
 api.interceptors.response.use(
   (response) => response,
-  (error) => {
+  async (error) => {
+    const originalRequest = error.config;
+    
+    // 401 에러 처리 (Unauthorized)
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      originalRequest._retry = true;
+      console.log("[API] 401 에러 감지 - 토큰 갱신 시도");
+      
+      try {
+        // refresh token으로 새 access token 요청
+        const response = await axios.post(
+          `${API_URL}/auth/refresh`,
+          {},
+          { withCredentials: true }
+        );
+        
+        const newAccessToken = response.data.accessToken;
+        if (newAccessToken) {
+          sessionStorage.setItem("accessToken", newAccessToken);
+          originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+          console.log("[API] ✅ 토큰 갱신 성공");
+          return api(originalRequest);
+        }
+      } catch (refreshError) {
+        console.log("[API] ❌ 토큰 갱신 실패 - 로그인 필요");
+        sessionStorage.removeItem("accessToken");
+        if (typeof window !== "undefined") {
+          alert("로그인이 만료되었습니다. 다시 로그인해주세요.");
+          window.location.href = "/login";
+        }
+        return Promise.reject(refreshError);
+      }
+    }
+    
     // 302 리다이렉트는 인증 실패로 처리
     if (error.response?.status === 302) {
-      console.log("302 리다이렉트 감지 - 인증 만료");
-      // 토큰 제거
+      console.log("[API] 302 리다이렉트 감지 - 인증 만료");
       sessionStorage.removeItem("accessToken");
-      // 로그인 페이지로 리다이렉트
       if (typeof window !== "undefined") {
+        alert("로그인이 만료되었습니다. 다시 로그인해주세요.");
         window.location.href = "/login";
       }
     }
+    
     return Promise.reject(error);
   }
 );

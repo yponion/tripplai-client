@@ -29,20 +29,24 @@ export const gatheringService = {
     });
     const data = res.data;
     return {
-      content: (data.content || []).map((g: any) => ({
-        id: g.id,
+      content: (data.groups || []).map((g: any) => ({
+        id: g.groupId,                       // groupId → id
         title: g.title,
-        content: g.content || g.description, // content 우선, description 폴백
-        author: g.authorNickname || g.authorEmail,
-        authorId: g.authorId,
-        authorEmail: g.authorEmail,
-        createdAt: g.createdAt,
-        updatedAt: g.updatedAt,
-        thumbnailUrl: g.thumbnailUrl,
+        content: g.description || '',        // description → content
+        author: `회원 ${g.memberId}`,        // memberId로 표시 (닉네임 없음)
+        authorId: g.memberId,                // memberId → authorId
+        authorEmail: '',                     // 백엔드에서 제공 안함
+        createdAt: g.startDate || new Date().toISOString(), // startDate 사용
+        updatedAt: g.endDate || new Date().toISOString(),   // endDate 사용
+        thumbnailUrl: '',                    // 백엔드에서 제공 안함
+        // 추가 필드
+        participateCount: g.participateCount,
+        maxCount: g.maxCount,
+        groupLikeCount: g.groupLikeCount,
       })),
-      totalElements: data.totalElements,
-      totalPages: data.totalPages,
-      hasNext: (data.number || 0) + 1 < (data.totalPages || 0),
+      totalElements: data.groups?.length || 0,  // 백엔드에서 제공 안함
+      totalPages: 1,                            // 백엔드에서 제공 안함
+      hasNext: data.hasNext || false,
     };
   },
 

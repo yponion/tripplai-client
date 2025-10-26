@@ -20,7 +20,7 @@ export default async function getFestivals() {
       return acc;
     }, {} as Record<string, string>)).toString()
 
-  const res = await fetch(`/api/tour/searchFestival2?${query}`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/tour/searchFestival2?${query}`, {
     // next: {
     //   tags: ["searchFestival2"],
     //   revalidate: 60 * 60 * 24, // 24시간 캐싱

@@ -2,32 +2,12 @@ import getDetailCommon from "@/app/festival/_services/getDetailCommon";
 import NavSection from "@/components/common/NavSection";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  FaMapMarkerAlt,
-  FaPhone,
-  FaRegHeart,
-  FaExternalLinkAlt,
-} from "react-icons/fa";
-import {
-  FaSun,
-  FaCloud,
-  FaCloudSun,
-  FaCloudShowersHeavy,
-  FaCloudRain,
-  FaSnowflake,
-  FaUmbrella,
-} from "react-icons/fa";
+import { FaMapMarkerAlt, FaPhone, FaRegHeart, FaExternalLinkAlt } from "react-icons/fa";
+import { FaSun, FaCloud, FaCloudSun, FaCloudShowersHeavy, FaCloudRain, FaSnowflake, FaUmbrella } from "react-icons/fa";
 import KakaoMapEmbed from "@/components/common/KakaoMapEmbed";
 import { tour } from "@/services/tour";
-import type {
-  AreaBasedList,
-  AreaBasedListResponse,
-  AreaCodeResponse,
-} from "@/types/tourInfo";
-import {
-  getShortTermForecast,
-  getBestTravelSeason,
-} from "@/services/weatherService";
+import type { AreaBasedList, AreaBasedListResponse, AreaCodeResponse } from "@/types/tourInfo";
+import { getShortTermForecast, getBestTravelSeason } from "@/services/weatherService";
 
 type Params = Promise<{ id: string }>;
 
@@ -55,9 +35,7 @@ export default async function DetailPage({ params }: { params: Params }) {
     };
     if (matched) paramsForCourses["areaCode"] = matched.code;
 
-    const coursesRes: AreaBasedListResponse = await tour.getAreaBasedList(
-      paramsForCourses
-    );
+    const coursesRes: AreaBasedListResponse = await tour.getAreaBasedList(paramsForCourses);
     const items = coursesRes.response.body.items.item || [];
     relatedCourses = items.filter((it) => it.firstimage).slice(0, 6);
 
@@ -69,9 +47,7 @@ export default async function DetailPage({ params }: { params: Params }) {
       pageNo: "1",
     };
     if (matched) foodParams["areaCode"] = matched.code;
-    const foodsRes: AreaBasedListResponse = await tour.getAreaBasedList(
-      foodParams
-    );
+    const foodsRes: AreaBasedListResponse = await tour.getAreaBasedList(foodParams);
     const foodItems = foodsRes.response.body.items.item || [];
     nearbyFoods = foodItems.filter((it) => it.firstimage).slice(0, 3);
   } catch (e) {
@@ -81,10 +57,7 @@ export default async function DetailPage({ params }: { params: Params }) {
   // 날씨/최적시기 위젯 데이터
   const regionNameForWeather = addr1 ? addr1.split(" ")[0] : title;
   const forecast = await getShortTermForecast(regionNameForWeather);
-  const seasonInfo = getBestTravelSeason(
-    `${title} ${addr1 ?? ""}`,
-    overview ?? ""
-  );
+  const seasonInfo = getBestTravelSeason(`${title} ${addr1 ?? ""}`, overview ?? "");
 
   const getWeatherIcon = (sky: string, pty: string) => {
     if (pty && pty !== "없음") {
@@ -141,15 +114,8 @@ export default async function DetailPage({ params }: { params: Params }) {
                   className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/90 text-[#1E1E1E] hover:bg-white"
                   aria-label="지도 보기"
                 >
-                  <Image
-                    src="/icons/kakao-talk.png"
-                    alt="kakao map"
-                    width={18}
-                    height={18}
-                  />
-                  <span className="text-sm font-medium hidden md:inline">
-                    지도
-                  </span>
+                  <Image src="/icons/kakao-talk.png" alt="kakao map" width={18} height={18} />
+                  <span className="text-sm font-medium hidden md:inline">지도</span>
                 </a>
                 <button
                   type="button"
@@ -157,9 +123,7 @@ export default async function DetailPage({ params }: { params: Params }) {
                   className="inline-flex items-center gap-2 px-3 py-2 rounded-full bg-white/90 text-rose-600 hover:bg-white"
                 >
                   <FaRegHeart />
-                  <span className="text-sm font-medium hidden md:inline">
-                    찜하기
-                  </span>
+                  <span className="text-sm font-medium hidden md:inline">찜하기</span>
                 </button>
               </div>
             </div>
@@ -171,23 +135,15 @@ export default async function DetailPage({ params }: { params: Params }) {
             <div className="md:col-span-2 space-y-6">
               {overview && (
                 <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                  <h2 className="text-xl font-semibold text-gray-900 mb-3">
-                    소개
-                  </h2>
-                  <p className="text-gray-700 leading-relaxed whitespace-pre-line">
-                    {overview}
-                  </p>
+                  <h2 className="text-xl font-semibold text-gray-900 mb-3">소개</h2>
+                  <p className="text-gray-700 leading-relaxed whitespace-pre-line">{overview}</p>
                 </section>
               )}
 
               <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  주변 지역 명소 추천
-                </h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">주변 지역 명소 추천</h2>
                 {relatedCourses.length === 0 ? (
-                  <p className="text-gray-600 text-sm">
-                    추천 명소를 불러오지 못했습니다.
-                  </p>
+                  <p className="text-gray-600 text-sm">추천 명소를 불러오지 못했습니다.</p>
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {relatedCourses.map((course) => (
@@ -206,14 +162,8 @@ export default async function DetailPage({ params }: { params: Params }) {
                           />
                         </div>
                         <div className="p-3">
-                          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">
-                            {course.title}
-                          </h3>
-                          {course.addr1 && (
-                            <p className="mt-1 text-xs text-gray-500 line-clamp-1">
-                              {course.addr1}
-                            </p>
-                          )}
+                          <h3 className="text-sm font-semibold text-gray-900 line-clamp-2">{course.title}</h3>
+                          {course.addr1 && <p className="mt-1 text-xs text-gray-500 line-clamp-1">{course.addr1}</p>}
                         </div>
                       </Link>
                     ))}
@@ -222,10 +172,7 @@ export default async function DetailPage({ params }: { params: Params }) {
               </section>
 
               {/* Map moved to left column */}
-              <section
-                id="map"
-                className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4"
-              >
+              <section id="map" className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4">
                 <h2 className="sr-only">지도</h2>
                 <KakaoMapEmbed address={addr1} title={title} height={360} />
               </section>
@@ -235,9 +182,7 @@ export default async function DetailPage({ params }: { params: Params }) {
             <aside className="md:col-span-1 space-y-6">
               {(addr1 || tel || homepage) && (
                 <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 md:sticky md:top-28">
-                  <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                    기본 정보
-                  </h2>
+                  <h2 className="text-lg font-semibold text-gray-900 mb-4">기본 정보</h2>
                   <ul className="space-y-4 text-gray-700">
                     {addr1 && (
                       <li className="flex items-start gap-3">
@@ -260,10 +205,7 @@ export default async function DetailPage({ params }: { params: Params }) {
                     {homepage && (
                       <li className="flex items-start gap-3">
                         <FaExternalLinkAlt className="mt-1 text-gray-500" />
-                        <p
-                          dangerouslySetInnerHTML={{ __html: homepage! }}
-                          className="text-rose-600 hover:underline"
-                        />
+                        <p dangerouslySetInnerHTML={{ __html: homepage! }} className="text-rose-600 hover:underline" />
                       </li>
                     )}
                   </ul>
@@ -272,30 +214,18 @@ export default async function DetailPage({ params }: { params: Params }) {
 
               {/* Weather and best season widget */}
               <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  오늘의 날씨 & 최적 여행 시기
-                </h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">오늘의 날씨 & 최적 여행 시기</h2>
                 {forecast.length === 0 ? (
-                  <p className="text-gray-600 text-sm">
-                    날씨 정보를 불러오지 못했습니다.
-                  </p>
+                  <p className="text-gray-600 text-sm">날씨 정보를 불러오지 못했습니다.</p>
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     {forecast.slice(0, 6).map((f) => (
-                      <div
-                        key={`${f.date}-${f.time}`}
-                        className="rounded-lg border border-gray-200 p-3 text-center"
-                      >
-                        <div className="text-xs text-gray-500">{`${f.time.slice(
-                          0,
-                          2
-                        )}시`}</div>
+                      <div key={`${f.date}-${f.time}`} className="rounded-lg border border-gray-200 p-3 text-center">
+                        <div className="text-xs text-gray-500">{`${f.time.slice(0, 2)}시`}</div>
                         <div className="mt-1 flex items-center justify-center text-lg">
                           {getWeatherIcon(f.sky, f.pty)}
                         </div>
-                        <div className="mt-1 text-sm font-semibold">
-                          {f.tmp}°C
-                        </div>
+                        <div className="mt-1 text-sm font-semibold">{f.tmp}°C</div>
                         <div className="text-[11px] text-gray-400 flex items-center justify-center gap-1">
                           <FaUmbrella className="text-blue-500" />
                           {f.pop}%
@@ -309,24 +239,16 @@ export default async function DetailPage({ params }: { params: Params }) {
                   <div className="mt-1 text-base font-semibold">
                     {seasonInfo.bestSeason} ({seasonInfo.months})
                   </div>
-                  <div className="mt-2 text-sm text-gray-700">
-                    {seasonInfo.conditions}
-                  </div>
-                  <div className="mt-2 text-xs text-gray-500">
-                    준비물: {seasonInfo.preparation}
-                  </div>
+                  <div className="mt-2 text-sm text-gray-700">{seasonInfo.conditions}</div>
+                  <div className="mt-2 text-xs text-gray-500">준비물: {seasonInfo.preparation}</div>
                 </div>
               </section>
 
               {/* 주변 맛집 추천 (Compact) */}
               <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">
-                  주변 맛집 추천
-                </h2>
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">주변 맛집 추천</h2>
                 {nearbyFoods.length === 0 ? (
-                  <p className="text-gray-600 text-sm">
-                    맛집 정보를 불러오지 못했습니다.
-                  </p>
+                  <p className="text-gray-600 text-sm">맛집 정보를 불러오지 못했습니다.</p>
                 ) : (
                   <div className="space-y-4">
                     {nearbyFoods.map((food) => (
@@ -336,23 +258,11 @@ export default async function DetailPage({ params }: { params: Params }) {
                         className="flex items-center gap-3 rounded-lg border border-gray-200 p-2 hover:shadow-sm transition-shadow"
                       >
                         <div className="relative w-20 h-20 rounded-md overflow-hidden bg-gray-100 flex-shrink-0">
-                          <Image
-                            src={food.firstimage}
-                            alt={food.title}
-                            fill
-                            sizes="80px"
-                            className="object-cover"
-                          />
+                          <Image src={food.firstimage} alt={food.title} fill sizes="80px" className="object-cover" />
                         </div>
                         <div className="min-w-0">
-                          <div className="text-sm font-semibold text-gray-900 line-clamp-2">
-                            {food.title}
-                          </div>
-                          {food.addr1 && (
-                            <div className="text-xs text-gray-500 line-clamp-1">
-                              {food.addr1}
-                            </div>
-                          )}
+                          <div className="text-sm font-semibold text-gray-900 line-clamp-2">{food.title}</div>
+                          {food.addr1 && <div className="text-xs text-gray-500 line-clamp-1">{food.addr1}</div>}
                         </div>
                       </Link>
                     ))}

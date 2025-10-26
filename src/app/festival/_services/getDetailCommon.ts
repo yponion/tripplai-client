@@ -17,7 +17,7 @@ export default async function getDetailCommon(id: string) {
       return acc;
     }, {} as Record<string, string>)).toString()
 
-  const res = await fetch(`/api/tour/detailCommon2?${query}`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/tour/detailCommon2?${query}`, {
     // next: {
     //   tags: ["detailCommon2", id],
     //   revalidate: 60 * 60 * 24, // 24시간 캐싱

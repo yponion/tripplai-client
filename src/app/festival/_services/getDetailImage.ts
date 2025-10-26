@@ -17,7 +17,7 @@ export default async function getDetailImage(id: string) {
       return acc;
     }, {} as Record<string, string>)).toString()
 
-  const res = await fetch(`/api/tour/detailImage2?${query}`, {
+  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/tour/detailImage2?${query}`, {
     // next: {
     //   tags: ["detailImage2", id],
     //   revalidate: 60 * 60 * 24, // 24시간 캐싱

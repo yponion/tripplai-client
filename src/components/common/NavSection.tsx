@@ -335,7 +335,7 @@ const NavSection = () => {
           </Link>
 
           {/* ✅ 축제 드롭다운 메뉴 */}
-          {/* <div
+          <div
             className="relative hidden md:block"
             onMouseEnter={() => setIsFestivalMenuOpen(true)}
             onMouseLeave={() => setIsFestivalMenuOpen(false)}
@@ -360,7 +360,7 @@ const NavSection = () => {
                 </Link>
               </div>
             )}
-          </div> */}
+          </div>
 
           <Link href="/popular-courses" className={getLinkClasses()}>
             추천 인기 여행코스

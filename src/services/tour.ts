@@ -32,7 +32,7 @@ export const tour = {
         return acc;
       }, {} as Record<string, string>)).toString()
 
-    const res = await fetch(`/api/tour/areaBasedList2?${query}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/tour/areaBasedList2?${query}`, {
       next: {
         tags: ["area", "based", "list"],
         revalidate: 60 * 60 * 24, // 1일 캐싱
@@ -67,7 +67,7 @@ export const tour = {
         return acc;
       }, {} as Record<string, string>)).toString()
 
-    const res = await fetch(`/api/tour/areaCode2?${query}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/tour/areaCode2?${query}`, {
       next: {
         tags: ["area", "code"],
         revalidate: 60 * 60 * 24, // 1일 캐싱
@@ -104,7 +104,7 @@ export const tour = {
         return acc;
       }, {} as Record<string, string>)).toString()
 
-    const res = await fetch(`/api/tour/lclsSystmCode2/?${query}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/tour/lclsSystmCode2/?${query}`, {
       next: {
         tags: ["getClassificationSystemCode"],
         revalidate: 60 * 60 * 24, // 1일 캐싱

@@ -73,26 +73,40 @@ api.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
       console.log("[API] 401 에러 감지 - 토큰 갱신 시도");
+      console.log("[API] 현재 URL:", originalRequest.url);
+      console.log("[API] refreshToken 쿠키 확인:", document.cookie);
       
       try {
         // refresh token으로 새 access token 요청
         const response = await axios.post(
           `${API_URL}/auth/refresh`,
           {},
-          { withCredentials: true }
+          { 
+            withCredentials: true,
+            headers: {
+              'Content-Type': 'application/json'
+            }
+          }
         );
         
+        console.log("[API] Refresh 응답:", response.data);
         const newAccessToken = response.data.accessToken;
+        
         if (newAccessToken) {
           sessionStorage.setItem("accessToken", newAccessToken);
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
-          console.log("[API] ✅ 토큰 갱신 성공");
+          console.log("[API] ✅ 토큰 갱신 성공, 요청 재시도");
           return api(originalRequest);
+        } else {
+          console.log("[API] ⚠️ 응답에 accessToken이 없음");
+          throw new Error("No access token in refresh response");
         }
-      } catch (refreshError) {
-        console.log("[API] ❌ 토큰 갱신 실패 - 로그인 필요");
-        sessionStorage.removeItem("accessToken");
-        if (typeof window !== "undefined") {
+      } catch (refreshError: any) {
+        console.log("[API] ❌ 토큰 갱신 실패:", refreshError.response?.status, refreshError.message);
+        
+        // 로그인 페이지를 제외한 경우만 리다이렉트
+        if (typeof window !== "undefined" && !window.location.pathname.includes("/login")) {
+          sessionStorage.removeItem("accessToken");
           alert("로그인이 만료되었습니다. 다시 로그인해주세요.");
           window.location.href = "/login";
         }

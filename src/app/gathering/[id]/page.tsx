@@ -8,6 +8,8 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatDate } from "@/utils/dateUtils";
 import { Heart, Users, UserCheck, UserX } from "lucide-react";
+import ConfirmModal from "@/components/common/ConfirmModal";
+import { useToast } from "@/hooks/useToast";
 
 export default function GatheringDetailPage() {
   const router = useRouter();
@@ -27,6 +29,16 @@ export default function GatheringDetailPage() {
   const [applicants, setApplicants] = useState<any[]>([]);
   const [showApplicants, setShowApplicants] = useState(false);
   const [loading, setLoading] = useState(false);
+  
+  // Modal states
+  const [showParticipateModal, setShowParticipateModal] = useState(false);
+  const [showLeaveModal, setShowLeaveModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [showPermitModal, setShowPermitModal] = useState(false);
+  const [selectedEnrollId, setSelectedEnrollId] = useState<number | null>(null);
+  
+  // Toast hook
+  const toast = useToast();
 
   useEffect(() => {
     if (!id) return;
@@ -91,12 +103,17 @@ export default function GatheringDetailPage() {
 
   const handleDelete = async () => {
     if (!post || deleting) return;
-    const ok = confirm("정말 삭제하시겠어요?");
-    if (!ok) return;
     setDeleting(true);
-    await gatheringService.remove(post.id);
+    try {
+      await gatheringService.remove(post.id);
+      setShowDeleteModal(false);
+      toast.success("모집글이 삭제되었습니다.");
+      setTimeout(() => router.push("/gathering"), 500);
+    } catch (error) {
+      console.error("삭제 실패:", error);
+      toast.error("삭제에 실패했습니다.");
+    }
     setDeleting(false);
-    router.push("/gathering");
   };
 
   // 신청자 목록 가져오기
@@ -116,14 +133,15 @@ export default function GatheringDetailPage() {
     setLoading(true);
     try {
       await gatheringService.participate(post.id);
-      alert("참가 신청이 완료되었습니다!");
+      setShowParticipateModal(false);
+      toast.success("참가 신청이 완료되었습니다!");
       // 데이터 새로고침
       const updated = await gatheringService.get(post.id);
       setPost(updated);
       setIsParticipating(true);
     } catch (error) {
       console.error("참가 신청 실패:", error);
-      alert("참가 신청에 실패했습니다.");
+      toast.error("참가 신청에 실패했습니다.");
     }
     setLoading(false);
   };
@@ -131,37 +149,38 @@ export default function GatheringDetailPage() {
   // 그룹 탈퇴
   const handleLeave = async () => {
     if (!post || loading) return;
-    const ok = confirm("정말 탈퇴하시겠습니까?");
-    if (!ok) return;
     setLoading(true);
     try {
       await gatheringService.leave(post.id);
-      alert("탈퇴가 완료되었습니다.");
+      setShowLeaveModal(false);
+      toast.success("탈퇴가 완료되었습니다.");
       // 데이터 새로고침
       const updated = await gatheringService.get(post.id);
       setPost(updated);
       setIsParticipating(false);
     } catch (error) {
       console.error("탈퇴 실패:", error);
-      alert("탈퇴에 실패했습니다.");
+      toast.error("탈퇴에 실패했습니다.");
     }
     setLoading(false);
   };
 
   // 신청 허가
-  const handlePermit = async (enrollId: number) => {
-    if (!post || loading) return;
+  const handlePermit = async () => {
+    if (!post || loading || !selectedEnrollId) return;
     setLoading(true);
     try {
-      await gatheringService.permit(post.id, enrollId);
-      alert("신청을 수락했습니다.");
+      await gatheringService.permit(post.id, selectedEnrollId);
+      setShowPermitModal(false);
+      toast.success("신청을 수락했습니다.");
       // 데이터 새로고침
       await loadApplicants();
       const updated = await gatheringService.get(post.id);
       setPost(updated);
+      setSelectedEnrollId(null);
     } catch (error) {
       console.error("허가 실패:", error);
-      alert("신청 수락에 실패했습니다.");
+      toast.error("신청 수락에 실패했습니다.");
     }
     setLoading(false);
   };
@@ -319,10 +338,10 @@ export default function GatheringDetailPage() {
                             <Button
                               variant="outline"
                               size="sm"
-                              onClick={handleDelete}
+                              onClick={() => setShowDeleteModal(true)}
                               disabled={deleting}
                             >
-                              {deleting ? "삭제 중..." : "삭제"}
+                              삭제
                             </Button>
                           </>
                         )}
@@ -336,7 +355,7 @@ export default function GatheringDetailPage() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={handleLeave}
+                                onClick={() => setShowLeaveModal(true)}
                                 disabled={loading}
                               >
                                 <UserX className="w-4 h-4 mr-1" />
@@ -346,7 +365,7 @@ export default function GatheringDetailPage() {
                               <Button
                                 variant="primary"
                                 size="sm"
-                                onClick={handleParticipate}
+                                onClick={() => setShowParticipateModal(true)}
                                 disabled={loading}
                               >
                                 <UserCheck className="w-4 h-4 mr-1" />
@@ -422,9 +441,10 @@ export default function GatheringDetailPage() {
                                   <Button
                                     variant="primary"
                                     size="sm"
-                                    onClick={() =>
-                                      handlePermit(applicant.enrollId)
-                                    }
+                                    onClick={() => {
+                                      setSelectedEnrollId(applicant.enrollId);
+                                      setShowPermitModal(true);
+                                    }}
                                     disabled={loading}
                                   >
                                     수락
@@ -474,10 +494,10 @@ export default function GatheringDetailPage() {
                           </Button>
                           <Button
                             variant="outline"
-                            onClick={handleDelete}
+                            onClick={() => setShowDeleteModal(true)}
                             disabled={deleting}
                           >
-                            {deleting ? "삭제 중..." : "삭제"}
+                            삭제
                           </Button>
                         </div>
                       )}
@@ -488,6 +508,58 @@ export default function GatheringDetailPage() {
           </div>
         )}
       </div>
+
+      {/* Modals */}
+      <ConfirmModal
+        isOpen={showParticipateModal}
+        onClose={() => setShowParticipateModal(false)}
+        onConfirm={handleParticipate}
+        title="참가 신청"
+        message="이 모집글에 참가 신청하시겠습니까?"
+        confirmText="참가 신청"
+        type="info"
+        loading={loading}
+      />
+
+      <ConfirmModal
+        isOpen={showLeaveModal}
+        onClose={() => setShowLeaveModal(false)}
+        onConfirm={handleLeave}
+        title="그룹 탈퇴"
+        message="정말 탈퇴하시겠습니까? 다시 참가하려면 재신청이 필요합니다."
+        confirmText="탈퇴하기"
+        type="danger"
+        loading={loading}
+      />
+
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleDelete}
+        title="모집글 삭제"
+        message="정말 삭제하시겠습니까? 삭제된 모집글은 복구할 수 없습니다."
+        confirmText="삭제"
+        cancelText="취소"
+        type="danger"
+        loading={deleting}
+      />
+
+      <ConfirmModal
+        isOpen={showPermitModal}
+        onClose={() => {
+          setShowPermitModal(false);
+          setSelectedEnrollId(null);
+        }}
+        onConfirm={handlePermit}
+        title="참가 신청 수락"
+        message="이 신청자의 참가를 승인하시겠습니까?"
+        confirmText="수락"
+        type="success"
+        loading={loading}
+      />
+
+      {/* Toast Container */}
+      <toast.ToastContainer />
     </Layout>
   );
 }

@@ -1,73 +1,75 @@
-"use client";
-
-import React, { useEffect, useRef } from "react";
-import { IoIosClose } from "react-icons/io";
-import { motion } from "framer-motion";
-import { createPortal } from 'react-dom';
+import React, { useEffect } from 'react'
+import { X } from 'lucide-react'
+import Button from './Button'
 
 interface ModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  title: string;
-  children: React.ReactNode;
+  isOpen: boolean
+  onClose: () => void
+  title: string
+  children: React.ReactNode
+  footer?: React.ReactNode
+  size?: 'sm' | 'md' | 'lg'
 }
 
-export default function Modal({ isOpen, onClose, title, children }: ModalProps) {
-  const modalRef = useRef<HTMLDivElement>(null);
-
+export default function Modal({ 
+  isOpen, 
+  onClose, 
+  title, 
+  children, 
+  footer,
+  size = 'md' 
+}: ModalProps) {
   useEffect(() => {
-    // 모달이 열릴 때 스크롤 막기
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
     }
-
-    // 모달이 닫힐 때 스크롤 복원
     return () => {
-      document.body.style.overflow = "auto";
-    };
-  }, [isOpen]);
-
-  // 모달 외부 클릭 시 닫기
-  const handleBackdropClick = (e: React.MouseEvent) => {
-    if (modalRef.current && !modalRef.current.contains(e.target as Node)) {
-      onClose();
+      document.body.style.overflow = 'unset'
     }
-  };
+  }, [isOpen])
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
-  // Portal을 사용하여 모달 렌더링
-  const modalContent = (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
-      onClick={handleBackdropClick}
-      aria-modal="true"
-      role="dialog"
+  const sizeClasses = {
+    sm: 'max-w-md',
+    md: 'max-w-lg',
+    lg: 'max-w-2xl'
+  }
+
+  return (
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50 backdrop-blur-sm animate-fadeIn"
+      onClick={onClose}
     >
-      <motion.div
-        ref={modalRef}
-        className="w-full max-w-2xl bg-white rounded-xl shadow-2xl max-h-[90vh] flex flex-col overflow-hidden"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        exit={{ opacity: 0, y: 10 }}
-        transition={{ duration: 0.2 }}
+      <div 
+        className={`bg-white rounded-2xl shadow-2xl w-full ${sizeClasses[size]} transform transition-all animate-slideUp`}
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between px-8 py-5 border-b border-gray-100">
-          <h2 className="text-xl font-bold text-gray-800">{title}</h2>
+        {/* Header */}
+        <div className="flex items-center justify-between p-6 border-b border-gray-100">
+          <h2 className="text-xl font-bold text-gray-900">{title}</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors duration-200 border-0"
-            aria-label="닫기"
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
           >
-            <IoIosClose className="size-7" />
+            <X className="w-5 h-5 text-gray-500" />
           </button>
         </div>
 
-        <div className="px-8 py-6 overflow-y-auto flex-1 custom-scrollbar">{children}</div>
-      </motion.div>
-    </div>
-  );
+        {/* Content */}
+        <div className="p-6">
+          {children}
+        </div>
 
-  // Modal root 요소에 포털로 렌더링
-  return typeof window !== 'undefined' ? createPortal(modalContent, document.body) : null;
-} 
+        {/* Footer */}
+        {footer && (
+          <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-100 bg-gray-50">
+            {footer}
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}

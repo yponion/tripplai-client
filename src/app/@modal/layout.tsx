@@ -10,8 +10,6 @@ interface Props {
 // 모달 외부 영역을 어둡게 처리하고 클릭시 뒤로가기
 export default function Layout({ children }: Props) {
   const router = useRouter();
-  
-  console.log("🎯 모달 레이아웃이 렌더링됨!", children);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {

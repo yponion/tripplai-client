@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import getFestivals from "../../_services/getFestivals";
 import { FestivalResponse } from "@/types/festival";
@@ -11,6 +11,13 @@ export default function FestivalList() {
   const [searchTerm, setSearchTerm] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) return <div>로딩 중...</div>;
 
   const { data, isLoading } = useQuery<FestivalResponse>({
     queryKey: ["festivals"],

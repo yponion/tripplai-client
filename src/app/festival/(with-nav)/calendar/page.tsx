@@ -2,7 +2,7 @@
 
 import { getDaysForMonth, getDate } from "@/utils/dateUtils";
 import clsx from "clsx";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FestivalResponse } from "@/types/festival";
 import getFestivals from "../../_services/getFestivals";
@@ -18,6 +18,13 @@ export default function Calendar() {
   const [searchTerm, setSearchTerm] = useState("");
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
+
+  const [isMounted, setIsMounted] = useState(false);
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
+  if (!isMounted) return <div>로딩 중...</div>;
 
   const { data, isLoading, error } = useQuery<FestivalResponse>({
     queryKey: ["festivals"],
@@ -50,8 +57,7 @@ export default function Calendar() {
   const baseYear = today.getFullYear();
   const baseMonth = today.getMonth();
   const year = new Date(baseYear, baseMonth + currentMonthIndex).getFullYear();
-  const month =
-    new Date(baseYear, baseMonth + currentMonthIndex).getMonth() + 1;
+  const month = new Date(baseYear, baseMonth + currentMonthIndex).getMonth() + 1;
 
   const allDays = getDaysForMonth(year, month);
   const weeks = [];
@@ -59,33 +65,21 @@ export default function Calendar() {
     weeks.push(allDays.slice(i, i + 7));
   }
 
-  const items = data?.response.body.items.item.filter(
-    (festival) => festival.eventenddate > getDate()
-  );
-  const sortedItems = items?.sort(
-    (a, b) => Number(a.eventstartdate) - Number(b.eventstartdate)
-  );
+  const items = data?.response.body.items.item.filter((festival) => festival.eventenddate > getDate());
+  const sortedItems = items?.sort((a, b) => Number(a.eventstartdate) - Number(b.eventstartdate));
 
-  const toDateStr = (d: number) =>
-    `${year}${String(month).padStart(2, "0")}${String(d).padStart(2, "0")}`;
-  const validDaysInMonth = allDays.filter(
-    (d) => typeof d === "number" && !isNaN(d as number)
-  ) as number[];
+  const toDateStr = (d: number) => `${year}${String(month).padStart(2, "0")}${String(d).padStart(2, "0")}`;
+  const validDaysInMonth = allDays.filter((d) => typeof d === "number" && !isNaN(d as number)) as number[];
   const countsByDate: Record<string, number> = {};
   validDaysInMonth.forEach((d) => {
     const ds = toDateStr(d);
-    const c =
-      sortedItems?.filter(
-        (item) => item.eventstartdate <= ds && ds <= item.eventenddate
-      ).length || 0;
+    const c = sortedItems?.filter((item) => item.eventstartdate <= ds && ds <= item.eventenddate).length || 0;
     countsByDate[ds] = c;
   });
   const maxDailyCount = Math.max(1, ...Object.values(countsByDate));
 
   const handleDateClick = (day: number) => {
-    const dateStr = `${year}${String(month).padStart(2, "0")}${String(
-      day
-    ).padStart(2, "0")}`;
+    const dateStr = `${year}${String(month).padStart(2, "0")}${String(day).padStart(2, "0")}`;
     setSelectedDate(dateStr === selectedDate ? null : dateStr);
   };
 
@@ -132,9 +126,7 @@ export default function Calendar() {
 
     // 날짜 필터링
     if (selectedDate) {
-      matchesDate =
-        festival.eventstartdate <= selectedDate &&
-        selectedDate <= festival.eventenddate;
+      matchesDate = festival.eventstartdate <= selectedDate && selectedDate <= festival.eventenddate;
     }
 
     return matchesSearch && matchesDate;
@@ -142,14 +134,9 @@ export default function Calendar() {
 
   const lastDayOfMonth = new Date(year, month, 0).getDate();
   const monthStartStr = `${year}${String(month).padStart(2, "0")}01`;
-  const monthEndStr = `${year}${String(month).padStart(2, "0")}${String(
-    lastDayOfMonth
-  ).padStart(2, "0")}`;
+  const monthEndStr = `${year}${String(month).padStart(2, "0")}${String(lastDayOfMonth).padStart(2, "0")}`;
   const monthHighlights = sortedItems
-    ?.filter(
-      (item) =>
-        item.eventenddate >= monthStartStr && item.eventstartdate <= monthEndStr
-    )
+    ?.filter((item) => item.eventenddate >= monthStartStr && item.eventstartdate <= monthEndStr)
     .slice(0, 30);
 
   // 축제 정렬
@@ -167,24 +154,17 @@ export default function Calendar() {
         if (isLongA && !isLongB) return 1;
         if (!isLongA && isLongB) return -1;
 
-        const aDistance = Math.abs(
-          parseInt(a.eventstartdate) - parseInt(selectedDate)
-        );
-        const bDistance = Math.abs(
-          parseInt(b.eventstartdate) - parseInt(selectedDate)
-        );
+        const aDistance = Math.abs(parseInt(a.eventstartdate) - parseInt(selectedDate));
+        const bDistance = Math.abs(parseInt(b.eventstartdate) - parseInt(selectedDate));
 
         return aDistance - bDistance;
       });
     }
 
-    return [...festivals].sort(
-      (a, b) => parseInt(a.eventstartdate) - parseInt(b.eventstartdate)
-    );
+    return [...festivals].sort((a, b) => parseInt(a.eventstartdate) - parseInt(b.eventstartdate));
   };
 
-  const rawListItems =
-    selectedDate || submittedQuery.trim() ? filteredFestivals : monthHighlights;
+  const rawListItems = selectedDate || submittedQuery.trim() ? filteredFestivals : monthHighlights;
   const listItems = getSortedFestivals(rawListItems);
 
   const imageFallback =
@@ -213,9 +193,7 @@ export default function Calendar() {
               <h2 className="mt-1 text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-rose-300 to-pink-400 drop-shadow-none">
                 {year}.{String(month).padStart(2, "0")}
               </h2>
-              <p className="mt-2 text-sm sm:text-base opacity-90">
-                국내 주요 축제를 한눈에 확인하세요.
-              </p>
+              <p className="mt-2 text-sm sm:text-base opacity-90">국내 주요 축제를 한눈에 확인하세요.</p>
             </div>
             <div className="flex items-center gap-3">
               <button
@@ -278,17 +256,11 @@ export default function Calendar() {
                       aria-pressed={isValidDay ? isSelected : undefined}
                       className={clsx(
                         "group relative p-2 sm:p-3 border border-gray-100 transition min-h-0 flex flex-col",
-                        !isValidDay
-                          ? "bg-gray-50 cursor-default"
-                          : "bg-white hover:bg-rose-50 cursor-pointer",
+                        !isValidDay ? "bg-gray-50 cursor-default" : "bg-white hover:bg-rose-50 cursor-pointer",
                         isSelected && "ring-2 ring-pink-500 ring-inset",
                         isToday && "bg-rose-50/50"
                       )}
-                      aria-label={
-                        isValidDay
-                          ? `${month}월 ${day}일, 축제 ${count}개`
-                          : undefined
-                      }
+                      aria-label={isValidDay ? `${month}월 ${day}일, 축제 ${count}개` : undefined}
                     >
                       {isValidDay && (
                         <div className="flex h-full w-full flex-col justify-between">
@@ -318,10 +290,7 @@ export default function Calendar() {
                               <div
                                 className="h-1 sm:h-1.5 rounded-full bg-pink-500 transition-all duration-300"
                                 style={{
-                                  width: `${Math.max(
-                                    count > 0 ? 15 : 0,
-                                    Math.round((count / maxDailyCount) * 100)
-                                  )}%`,
+                                  width: `${Math.max(count > 0 ? 15 : 0, Math.round((count / maxDailyCount) * 100))}%`,
                                 }}
                               />
                             </div>
@@ -342,10 +311,7 @@ export default function Calendar() {
             <div>
               <h3 className="text-xl sm:text-2xl font-bold text-gray-900">
                 {selectedDate
-                  ? `${selectedDate.slice(0, 4)}.${selectedDate.slice(
-                      4,
-                      6
-                    )}.${selectedDate.slice(6, 8)} 축제 ${
+                  ? `${selectedDate.slice(0, 4)}.${selectedDate.slice(4, 6)}.${selectedDate.slice(6, 8)} 축제 ${
                       listItems?.length || 0
                     }개`
                   : submittedQuery
@@ -354,8 +320,7 @@ export default function Calendar() {
               </h3>
               {!selectedDate && !submittedQuery && (
                 <p className="mt-1 text-sm text-gray-500">
-                  선택한 날짜가 없어요. 달력에서 날짜를 눌러 상세 리스트를
-                  확인하세요.
+                  선택한 날짜가 없어요. 달력에서 날짜를 눌러 상세 리스트를 확인하세요.
                 </p>
               )}
             </div>
@@ -434,20 +399,15 @@ export default function Calendar() {
                       className="h-16 w-16 sm:h-20 sm:w-28 rounded-lg object-cover flex-shrink-0"
                       loading="lazy"
                       onError={(e) => {
-                        (e.currentTarget as HTMLImageElement).src =
-                          imageFallback;
+                        (e.currentTarget as HTMLImageElement).src = imageFallback;
                       }}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold text-gray-900 truncate">
-                        {item.title}
-                      </p>
+                      <p className="text-sm font-semibold text-gray-900 truncate">{item.title}</p>
                       <p className="mt-0.5 text-xs text-gray-600 truncate">
                         📅 {item.eventstartdate} ~ {item.eventenddate}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        📍 {item.addr1 || "장소 정보 없음"}
-                      </p>
+                      <p className="text-xs text-gray-500 truncate">📍 {item.addr1 || "장소 정보 없음"}</p>
                     </div>
                     <button
                       type="button"
@@ -467,8 +427,7 @@ export default function Calendar() {
               </ul>
             ) : (
               <div className="rounded-xl border border-gray-200 bg-gray-50 p-8 text-center text-gray-600">
-                표시할 축제가 없습니다. 날짜를 선택하거나 검색어를 변경해
-                보세요.
+                표시할 축제가 없습니다. 날짜를 선택하거나 검색어를 변경해 보세요.
               </div>
             )}
           </div>

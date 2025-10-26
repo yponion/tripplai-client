@@ -10,9 +10,6 @@ export const tour = {
   getAreaBasedList: async (
     customParams?: Partial<AreaBasedListParams>
   ): Promise<AreaBasedListResponse> => {
-    const url = new URL(
-      process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/areaBasedList2"
-    );
 
     // 기본 params
     const defaultParams: AreaBasedListParams = {
@@ -27,13 +24,15 @@ export const tour = {
     // 기본 params에 customParams를 덮어씀
     const finalParams = { ...defaultParams, ...customParams };
 
-    Object.entries(finalParams).forEach(([key, value]) => {
-      if (value !== undefined) {
-        url.searchParams.append(key, value.toString());
-      }
-    });
+    const query = new URLSearchParams(
+      Object.entries(finalParams).reduce((acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      }, {} as Record<string, string>)).toString()
 
-    const res = await fetch(url.toString(), {
+    const res = await fetch(`/api/tour/areaBasedList2?${query}`, {
       next: {
         tags: ["area", "based", "list"],
         revalidate: 60 * 60 * 24, // 1일 캐싱
@@ -47,10 +46,6 @@ export const tour = {
   },
 
   getAreaCode: async (customParams?: Partial<AreaCodeParams>) => {
-    const url = new URL(
-      process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/areaCode2"
-    );
-
     // 기본 params
     const defaultParams: AreaCodeParams = {
       numOfRows: 20,
@@ -64,13 +59,15 @@ export const tour = {
     // 기본 params에 customParams를 덮어씀
     const finalParams = { ...defaultParams, ...customParams };
 
-    Object.entries(finalParams).forEach(([key, value]) => {
-      if (value !== undefined) {
-        url.searchParams.append(key, value.toString());
-      }
-    });
+    const query = new URLSearchParams(
+      Object.entries(finalParams).reduce((acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      }, {} as Record<string, string>)).toString()
 
-    const res = await fetch(url.toString(), {
+    const res = await fetch(`/api/tour/areaCode2?${query}`, {
       next: {
         tags: ["area", "code"],
         revalidate: 60 * 60 * 24, // 1일 캐싱
@@ -86,9 +83,6 @@ export const tour = {
   getClassificationSystemCode: async (
     customParams?: Partial<ClassificationSystemCodeParams>
   ): Promise<ClassificationSystemCodeResponse> => {
-    const url = new URL(
-      process.env.NEXT_PUBLIC_TOUR_API_BASE_URL + "/lclsSystmCode2"
-    );
 
     const defaultParams: ClassificationSystemCodeParams = {
       serviceKey: process.env.NEXT_PUBLIC_TOUR_API_KEY!,
@@ -102,11 +96,15 @@ export const tour = {
 
     const finalParams = { ...defaultParams, ...customParams };
 
-    Object.entries(finalParams).forEach(([key, value]) => {
-      if (value) url.searchParams.append(key, value.toString());
-    });
+    const query = new URLSearchParams(
+      Object.entries(finalParams).reduce((acc, [key, value]) => {
+        if (value !== undefined) {
+          acc[key] = String(value);
+        }
+        return acc;
+      }, {} as Record<string, string>)).toString()
 
-    const res = await fetch(url.toString(), {
+    const res = await fetch(`/api/tour/lclsSystmCode2/?${query}`, {
       next: {
         tags: ["getClassificationSystemCode"],
         revalidate: 60 * 60 * 24, // 1일 캐싱

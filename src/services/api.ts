@@ -96,6 +96,13 @@ api.interceptors.response.use(
           sessionStorage.setItem("accessToken", newAccessToken);
           originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
           console.log("[API] ✅ 토큰 갱신 성공, 요청 재시도");
+          
+          // FormData 재생성 (FormData는 한 번 읽으면 소진됨)
+          if (originalRequest._formDataCreator) {
+            console.log("[API] 🔄 FormData 재생성");
+            originalRequest.data = originalRequest._formDataCreator();
+          }
+          
           return api(originalRequest);
         } else {
           console.log("[API] ⚠️ 응답에 accessToken이 없음");
@@ -193,8 +200,6 @@ export const recommendationApi = {
 
   // 추천 결과 저장 API
   saveTravelRecommendation: (data: TravelPlanData, proofImage?: File) => {
-    const formData = new FormData();
-
     // JSON 데이터를 문자열로 변환
     const jsonString = JSON.stringify(data);
     console.log("📤 [SAVE] 저장할 데이터 (JSON string):");
@@ -202,24 +207,34 @@ export const recommendationApi = {
     console.log("📤 [SAVE] 저장할 데이터 (객체):");
     console.log(data);
     
-    // JSON 데이터를 FormData에 추가
-    formData.append("data", jsonString);
+    // FormData 생성 함수 (retry 시 재생성을 위해)
+    const createFormData = () => {
+      const formData = new FormData();
+      formData.append("data", jsonString);
+      if (proofImage) {
+        formData.append("proofImage", proofImage);
+      }
+      return formData;
+    };
 
-    // 증명 이미지가 있으면 추가
-    if (proofImage) {
-      formData.append("proofImage", proofImage);
-      console.log("📤 [SAVE] 이미지 포함:", proofImage.name);
-    }
+    const formData = createFormData();
 
     console.log("📤 [SAVE] FormData 내용:");
     for (const [key, value] of formData.entries()) {
       console.log(`  ${key}:`, typeof value === 'string' ? value : value);
     }
 
+    if (proofImage) {
+      console.log("📤 [SAVE] 이미지 포함:", proofImage.name);
+    }
+
+    // config에 FormData 생성자 저장 (retry를 위해)
     return api.post("/api/recommend/save", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },
+      // @ts-ignore - 커스텀 필드
+      _formDataCreator: createFormData,
     });
   },
 };

@@ -2,7 +2,7 @@
 
 import { getDaysForMonth, getDate } from "@/utils/dateUtils";
 import clsx from "clsx";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { FestivalResponse } from "@/types/festival";
 import getFestivals from "../../_services/getFestivals";
@@ -19,13 +19,7 @@ export default function Calendar() {
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) return <div>로딩 중...</div>;
-
+  // ✅ Hook들을 먼저 호출 (조건문 전에)
   const { data, isLoading, error } = useQuery<FestivalResponse>({
     queryKey: ["festivals"],
     queryFn: getFestivals,

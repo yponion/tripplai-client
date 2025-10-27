@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import getFestivals from "../../_services/getFestivals";
 import { FestivalResponse } from "@/types/festival";
@@ -12,13 +12,7 @@ export default function FestivalList() {
   const [submittedQuery, setSubmittedQuery] = useState("");
   const [suggestions, setSuggestions] = useState<string[]>([]);
 
-  const [isMounted, setIsMounted] = useState(false);
-  useEffect(() => {
-    setIsMounted(true);
-  }, []);
-
-  if (!isMounted) return <div>로딩 중...</div>;
-
+  //  Hook들을 먼저 호출 (조건문 전에)
   const { data, isLoading } = useQuery<FestivalResponse>({
     queryKey: ["festivals"],
     queryFn: getFestivals,
@@ -65,7 +59,8 @@ export default function FestivalList() {
 
   const sortedItems = filteredItems?.sort((a, b) => Number(a.eventstartdate) - Number(b.eventstartdate));
 
-  if (isLoading) return <div>로딩 중...</div>;
+  // ✅ 로딩 상태 체크를 맨 마지막에
+  if (isLoading) return <div className="flex justify-center items-center min-h-screen">로딩 중...</div>;
 
   return (
     <div className="px-5 py-4 flex flex-col items-center">

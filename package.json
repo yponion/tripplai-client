@@ -34,7 +34,7 @@
     "lodash": "^4.17.21",
     "lottie-react": "^2.4.1",
     "lucide-react": "^0.542.0",
-    "next": "^15.2.3",
+    "next": "15.2.8",
     "next-auth": "^4.24.11",
     "quill": "^2.0.3",
     "react": "^19.0.0",
